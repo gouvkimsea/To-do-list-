@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #FAF6F0;
+    color: #2D2A26;
+  }
+}
+
+.font-serif-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-serif-italic {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+:root {
+  --navbar-height: 49px;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --navbar-height: 57px;
+  }
+}
+
+.radial-stage-bg {
+  background: radial-gradient(circle at 50% 45%, #FFFDF9 0%, #F7F2EA 52%, #F2ECE1 100%);
+}
+
+.full-screen-hero {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.skip-to-content {
+  position: absolute;
+  left: 0.75rem;
+  top: -4rem;
+  z-index: 100;
+  background-color: #2F2B28;
+  color: #FAF6F0;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: top 0.15s ease-in-out;
+  box-shadow: 0 4px 12px rgba(47, 43, 40, 0.25);
+}
+
+.skip-to-content:focus {
+  top: 0.75rem;
+  outline: 2px solid #C26D43;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #C26D43;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
