@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Keyboard, Undo2, Redo2 } from 'lucide-react';
+import { ChevronDown, Keyboard, Undo2, Redo2, Volume2, VolumeX } from 'lucide-react';
 import { PAGE_ROUTES, PagePath } from '../utils/todoLogic';
 import { RouterLink } from './RouterLink';
 
@@ -12,6 +12,8 @@ interface NavbarProps {
   onRedo?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
+  soundEnabled?: boolean;
+  onToggleSound?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -23,6 +25,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRedo,
   canUndo,
   canRedo,
+  soundEnabled = true,
+  onToggleSound,
 }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
@@ -195,6 +199,38 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
+          {onToggleSound && (
+            <button
+              type="button"
+              onClick={onToggleSound}
+              aria-label={
+                soundEnabled
+                  ? 'Mute task completion sound effect (Press M)'
+                  : 'Enable task completion sound effect (Press M)'
+              }
+              data-testid="navbar-sound-toggle-btn"
+              title={
+                soundEnabled
+                  ? 'Completion chime: ON (Click or press M to mute)'
+                  : 'Completion chime: MUTED (Click or press M to enable)'
+              }
+              className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-full text-[11px] font-bold border transition-colors cursor-pointer shrink-0 ${
+                soundEnabled
+                  ? 'bg-white hover:bg-[#F4EFE6] border-[#DED6CA] text-[#4A433C]'
+                  : 'bg-[#F0EBE1] hover:bg-[#EAE3D6] border-[#D8CFC2] text-[#8C8379]'
+              }`}
+            >
+              {soundEnabled ? (
+                <Volume2 className="w-3.5 h-3.5 text-[#C26D43]" />
+              ) : (
+                <VolumeX className="w-3.5 h-3.5 text-[#8C8379]" />
+              )}
+              <span className="hidden sm:inline">
+                {soundEnabled ? 'Sound ON' : 'Muted'}
+              </span>
+            </button>
+          )}
+
           {onOpenShortcutsModal && (
             <button
               type="button"
@@ -235,26 +271,49 @@ export const Navbar: React.FC<NavbarProps> = ({
       {mobileNavOpen && (
         <nav
           aria-label="Mobile Navigation"
-          className="lg:hidden pt-3 pb-1 mt-3 border-t border-[#E8E0D4] flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs font-semibold text-[#5A534C]"
+          className="lg:hidden pt-3 pb-2 mt-3 border-t border-[#E8E0D4] flex flex-col items-center gap-2 text-xs font-semibold text-[#5A534C]"
         >
-          {PAGE_ROUTES.map((route) => {
-            const isActive = currentPath === route.path;
-            return (
-              <RouterLink
-                key={route.path}
-                to={route.path}
-                currentPath={currentPath}
-                onNavigate={handleSelectPage}
-                className={`px-3 py-1.5 rounded-full transition-colors ${
-                  isActive
-                    ? 'bg-[#C26D43] text-white font-bold'
-                    : 'bg-[#F4EFE6] text-[#4A433C] hover:text-[#2F2B28]'
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
+            {PAGE_ROUTES.map((route) => {
+              const isActive = currentPath === route.path;
+              return (
+                <RouterLink
+                  key={route.path}
+                  to={route.path}
+                  currentPath={currentPath}
+                  onNavigate={handleSelectPage}
+                  className={`px-3 py-1.5 rounded-full transition-colors ${
+                    isActive
+                      ? 'bg-[#C26D43] text-white font-bold'
+                      : 'bg-[#F4EFE6] text-[#4A433C] hover:text-[#2F2B28]'
+                  }`}
+                >
+                  {route.label}
+                </RouterLink>
+              );
+            })}
+          </div>
+
+          {onToggleSound && (
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={onToggleSound}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                  soundEnabled
+                    ? 'bg-white border-[#DED6CA] text-[#4A433C]'
+                    : 'bg-[#F0EBE1] border-[#D8CFC2] text-[#8C8379]'
                 }`}
               >
-                {route.label}
-              </RouterLink>
-            );
-          })}
+                {soundEnabled ? (
+                  <Volume2 className="w-3.5 h-3.5 text-[#C26D43]" />
+                ) : (
+                  <VolumeX className="w-3.5 h-3.5 text-[#8C8379]" />
+                )}
+                <span>Completion Sound: {soundEnabled ? 'ON' : 'MUTED'}</span>
+              </button>
+            </div>
+          )}
         </nav>
       )}
     </header>

@@ -49,6 +49,11 @@ import {
   syncDailyTaskText,
   DETAILED_DAILY_TASK_LINKS,
 } from './utils/todoLogic';
+import {
+  getSoundPreference,
+  setSoundPreference,
+  playTaskCompletionDing,
+} from './utils/audioFeedback';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import { Navbar } from './components/Navbar';
 import { DownloadModal } from './components/DownloadModal';
@@ -175,6 +180,9 @@ export default function App() {
     tab: 'download' | 'demo';
   }>({ open: false, tab: 'download' });
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() =>
+    getSoundPreference()
+  );
   const [saveToastMessage, setSaveToastMessage] = useState<string | null>(null);
   const saveToastTimerRef = useRef<number | null>(null);
 
@@ -304,6 +312,23 @@ export default function App() {
     }
   }, [handleRedoRaw, handleExplicitSave]);
 
+  const handleToggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      setSoundPreference(next);
+      handleExplicitSave(
+        next
+          ? 'Completion sound enabled 🔔 (Press M to mute)'
+          : 'Completion sound muted 🔕 (Press M to unmute)'
+      );
+      if (next) {
+        // Subtle preview chime when enabled
+        playTaskCompletionDing(null, { forcePlay: true });
+      }
+      return next;
+    });
+  }, [handleExplicitSave]);
+
   useEffect(() => {
     return () => {
       if (typeof window !== 'undefined' && saveToastTimerRef.current !== null) {
@@ -357,6 +382,11 @@ export default function App() {
         case 'REDO': {
           e.preventDefault();
           handleRedo();
+          break;
+        }
+        case 'TOGGLE_SOUND': {
+          e.preventDefault();
+          handleToggleSound();
           break;
         }
         case 'ESCAPE': {
@@ -507,6 +537,10 @@ export default function App() {
   ) => {
     const currentDay = columns.find((col) => col.id === dayId);
     if (currentDay) {
+      const targetTask = currentDay.tasks.find((t) => t.id === taskId);
+      if (targetTask && !targetTask.completed) {
+        playTaskCompletionDing();
+      }
       const nextTasks = currentDay.tasks.map((t) =>
         t.id === taskId ? toggleTaskCompletion(t) : t
       );
@@ -617,6 +651,10 @@ export default function App() {
   };
 
   const handleToggleDetailedTask = (taskId: string) => {
+    const targetTask = detailedTasks.find((t) => t.id === taskId);
+    if (targetTask && !targetTask.completed) {
+      playTaskCompletionDing();
+    }
     const { nextDetailedTasks, nextColumns } = syncDetailedTaskToggle(
       detailedTasks,
       columns,
@@ -653,6 +691,9 @@ export default function App() {
   const handleCycleDetailedStatus = (taskId: string) => {
     const target = detailedTasks.find((t) => t.id === taskId);
     const nextStatus = target ? cycleStatus(target.status) : 'Done';
+    if (target && target.status !== 'Done' && nextStatus === 'Done') {
+      playTaskCompletionDing();
+    }
     const { nextDetailedTasks, nextColumns } = syncDetailedTaskStatus(
       detailedTasks,
       columns,
@@ -698,6 +739,11 @@ export default function App() {
   };
 
   const handleToggleGoalTask = (mode: 'month' | 'year', taskId: string) => {
+    const list = mode === 'month' ? monthlyGoals : yearlyGoals;
+    const target = list.find((t) => t.id === taskId);
+    if (target && !target.completed) {
+      playTaskCompletionDing();
+    }
     const setter = mode === 'month' ? setMonthlyGoals : setYearlyGoals;
     setter((prev) =>
       prev.map((t) => {
@@ -858,6 +904,8 @@ export default function App() {
         onRedo={handleRedo}
         canUndo={canUndo}
         canRedo={canRedo}
+        soundEnabled={soundEnabled}
+        onToggleSound={handleToggleSound}
       />
 
       <main

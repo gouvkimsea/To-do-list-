@@ -594,6 +594,20 @@ test('resolveKeyboardShortcutAction resolves global, modal, and editable-target 
     'CYCLE_THEME'
   );
 
+  // Sound toggle shortcut (M key)
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'm', isEditableTarget: false }),
+    'TOGGLE_SOUND'
+  );
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'M', isEditableTarget: false }),
+    'TOGGLE_SOUND'
+  );
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'm', isEditableTarget: true }),
+    null
+  );
+
   // Page navigation via Alt+ArrowLeft / Alt+ArrowRight
   assert.equal(
     resolveKeyboardShortcutAction({

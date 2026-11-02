@@ -1784,6 +1784,7 @@ export type KeyboardShortcutAction =
   | 'SAVE_DASHBOARD'
   | 'UNDO'
   | 'REDO'
+  | 'TOGGLE_SOUND'
   | 'ESCAPE'
   | 'OPEN_SHORTCUTS_MODAL'
   | 'FOCUS_SEARCH'
@@ -1835,6 +1836,15 @@ export const KEYBOARD_SHORTCUTS: KeyboardShortcutItem[] = [
     label: 'Redo Task Action',
     description:
       'Re-applies the most recently undone task change (also works with Ctrl + Y).',
+  },
+  {
+    id: 'toggle-sound-effect',
+    action: 'TOGGLE_SOUND',
+    category: 'Saving & Editing',
+    keys: ['M'],
+    label: 'Toggle Completion Sound',
+    description:
+      'Mutes or enables the subtle Web Audio API tactile chime when completing a task.',
   },
   {
     id: 'enter-next-task',
@@ -2005,6 +2015,7 @@ export function resolveKeyboardShortcutAction(
       if (key === '2') return 'VIEW_MONTH';
       if (key === '3') return 'VIEW_YEAR';
       if (lowerKey === 't') return 'CYCLE_THEME';
+      if (lowerKey === 'm') return 'TOGGLE_SOUND';
     }
   }
 
