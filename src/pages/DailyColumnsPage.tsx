@@ -19,12 +19,19 @@ export const DailyColumnsPage: React.FC<SharedDashboardPageProps> = ({
   onToggleDailyTask,
   onCycleDailyPriority,
   onCycleDailyCategory,
+  onCycleDailyRecurring,
+  onSetDailyRecurring,
   onUpdateDailyTaskText,
+  onQuickAddDailyTask,
   onUpdateDailyTaskNotes,
   onReorderOrMoveDailyTask,
   onResetWeek,
   onClearCompletedTasks,
   onClearPendingTasks,
+  archivedCount,
+  onArchiveCompletedTasks,
+  onArchiveSingleDailyTask,
+  onOpenArchiveModal,
   onQuickSave,
   onOpenShortcutsModal,
 }) => {
@@ -33,18 +40,13 @@ export const DailyColumnsPage: React.FC<SharedDashboardPageProps> = ({
   return (
     <section
       id="daily-columns"
-      className="radial-stage-bg full-screen-hero flex-1 py-3 sm:py-4 px-4 sm:px-6 lg:px-8"
+      className="radial-stage-bg full-screen-hero w-full flex-1 min-h-[calc(100dvh-var(--navbar-height,57px))] flex flex-col px-1.5 sm:px-3 py-1.5 sm:py-2 box-border"
     >
-      <div className="max-w-5xl mx-auto w-full my-auto">
-        <SectionHeader
-          eyebrow="REALLY READABLE DAILY COLUMNS"
-          italicSubtitle="each day is"
-          title="SPACIOUS & CLEAR"
-        />
-
+      <div className="w-full flex-1 flex flex-col min-h-0">
         <BrowserFrame
           urlText="plenty of room to type · drag to reorder · expand tasks for notes"
-          className="max-w-5xl w-full"
+          className="w-full"
+          defaultFullscreen
           chromeRightSlot={
             <button
               type="button"
@@ -55,6 +57,14 @@ export const DailyColumnsPage: React.FC<SharedDashboardPageProps> = ({
             </button>
           }
         >
+          <div className="pt-2.5 sm:pt-3 px-3 sm:px-4">
+            <SectionHeader
+              eyebrow="REALLY READABLE DAILY COLUMNS"
+              italicSubtitle="each day is"
+              title="SPACIOUS & CLEAR"
+            />
+          </div>
+
           <InteractiveDashboard
             columns={columns}
             monthlyGoals={monthlyGoals}
@@ -71,7 +81,10 @@ export const DailyColumnsPage: React.FC<SharedDashboardPageProps> = ({
             onToggleDailyTask={onToggleDailyTask}
             onCycleDailyPriority={onCycleDailyPriority}
             onCycleDailyCategory={onCycleDailyCategory}
+            onCycleDailyRecurring={onCycleDailyRecurring}
+            onSetDailyRecurring={onSetDailyRecurring}
             onUpdateDailyTaskText={onUpdateDailyTaskText}
+            onQuickAddDailyTask={onQuickAddDailyTask}
             onUpdateDailyTaskNotes={onUpdateDailyTaskNotes}
             enableTaskNotes
             onReorderOrMoveDailyTask={onReorderOrMoveDailyTask}
@@ -80,30 +93,34 @@ export const DailyColumnsPage: React.FC<SharedDashboardPageProps> = ({
             showBulkActions
             onClearCompletedTasks={onClearCompletedTasks}
             onClearPendingTasks={onClearPendingTasks}
+            archivedCount={archivedCount}
+            onArchiveCompletedTasks={onArchiveCompletedTasks}
+            onArchiveSingleDailyTask={onArchiveSingleDailyTask}
+            onOpenArchiveModal={onOpenArchiveModal}
             visibleColumnSlice={showAllDays ? undefined : [3, 7]}
             instancePrefix="spacious"
             onQuickSave={onQuickSave}
             onOpenShortcutsModal={onOpenShortcutsModal}
           />
-        </BrowserFrame>
 
-        <div className="mt-3.5 sm:mt-4 text-center space-y-2">
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-            <span className="bg-[#F5DFD0] text-[#B05C37] font-bold text-xs sm:text-sm px-4 sm:px-5 py-1 rounded-full whitespace-nowrap">
-              Easy to read
-            </span>
-            <span className="bg-[#DFECE0] text-[#3F6F4A] font-bold text-xs sm:text-sm px-4 sm:px-5 py-1 rounded-full whitespace-nowrap">
-              Quick to click
-            </span>
-            <span className="bg-[#E6E2F3] text-[#5D508C] font-bold text-xs sm:text-sm px-4 sm:px-5 py-1 rounded-full whitespace-nowrap">
-              Fits your flow
-            </span>
+          <div className="px-3 sm:px-4 pb-3 pt-2 border-t border-[#ECE7DF] text-center space-y-1.5">
+            <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+              <span className="bg-[#F5DFD0] text-[#B05C37] font-bold text-xs px-4 py-1 rounded-full whitespace-nowrap">
+                Easy to read
+              </span>
+              <span className="bg-[#DFECE0] text-[#3F6F4A] font-bold text-xs px-4 py-1 rounded-full whitespace-nowrap">
+                Quick to click
+              </span>
+              <span className="bg-[#E6E2F3] text-[#5D508C] font-bold text-xs px-4 py-1 rounded-full whitespace-nowrap">
+                Fits your flow
+              </span>
+            </div>
+            <p className="text-xs font-semibold text-[#8A8279]">
+              No cramped cells or tiny text — drag tasks within a day or across
+              days of the week
+            </p>
           </div>
-          <p className="text-xs sm:text-sm font-semibold text-[#8A8279]">
-            No cramped cells or tiny text — drag tasks within a day or across
-            days of the week
-          </p>
-        </div>
+        </BrowserFrame>
       </div>
     </section>
   );

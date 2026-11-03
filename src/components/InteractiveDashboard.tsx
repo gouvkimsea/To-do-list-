@@ -8,6 +8,9 @@ import {
   ChevronDown,
   Trash2,
   FileText,
+  Archive,
+  Plus,
+  Repeat,
 } from 'lucide-react';
 import {
   DndContext,
@@ -33,25 +36,37 @@ import {
   AnimateLayoutChanges,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { motion } from 'motion/react';
+import { motion, LayoutGroup } from 'framer-motion';
 import {
   CATEGORY_BADGE_STYLES,
   DailyTask,
   DayColumn,
   DetailedTask,
   Priority,
+  RECURRING_CONFIG,
+  RECURRING_INTERVALS,
+  RecurringInterval,
+  TASK_CATEGORIES,
+  TaskCategory,
   TaskStatus,
   ThemeId,
   THEMES,
   ViewMode,
   calculateDayProgress,
+  countMatchingTasks,
+  countTasksByCategory,
+  countWeekTasksByCompletion,
+  cycleCategory,
+  cycleRecurringInterval,
+  filterDayColumnsByCategory,
   filterDayColumnsByKeyword,
   filterDetailedTasksByKeyword,
-  countMatchingTasks,
-  countWeekTasksByCompletion,
+  filterTasksByCategory,
   isDayAllDone,
+  sanitizeTaskText,
 } from '../utils/todoLogic';
 import { VoiceMicButton } from './VoiceMicButton';
+import { PomodoroTimer } from './PomodoroTimer';
 
 interface InteractiveDashboardProps {
   columns: DayColumn[];
@@ -73,7 +88,19 @@ interface InteractiveDashboardProps {
   ) => void;
   onCycleDailyPriority: (dayId: string, taskId: string) => void;
   onCycleDailyCategory?: (dayId: string, taskId: string) => void;
+  onCycleDailyRecurring?: (dayId: string, taskId: string) => void;
+  onSetDailyRecurring?: (
+    dayId: string,
+    taskId: string,
+    interval: RecurringInterval
+  ) => void;
   onUpdateDailyTaskText: (dayId: string, taskId: string, text: string) => void;
+  onQuickAddDailyTask?: (
+    dayId: string,
+    text: string,
+    category?: TaskCategory,
+    recurring?: RecurringInterval
+  ) => void;
   onUpdateDailyTaskNotes?: (dayId: string, taskId: string, notes: string) => void;
   enableTaskNotes?: boolean;
   onReorderOrMoveDailyTask?: (activeTaskId: string, overId: string) => void;
@@ -92,6 +119,10 @@ interface InteractiveDashboardProps {
   instancePrefix?: string;
   onQuickSave?: () => void;
   onOpenShortcutsModal?: () => void;
+  archivedCount?: number;
+  onArchiveCompletedTasks?: () => void;
+  onArchiveSingleDailyTask?: (dayId: string, taskId: string) => void;
+  onOpenArchiveModal?: () => void;
 }
 
 export const PRIORITY_DOT_COLORS: Record<Priority, string> = {
@@ -130,13 +161,7 @@ const dropAnimationConfig: DropAnimation = {
   easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
 };
 
-const customAnimateLayoutChanges: AnimateLayoutChanges = (args) => {
-  const { isSorting, wasDragging } = args;
-  if (isSorting || wasDragging) {
-    return defaultAnimateLayoutChanges(args);
-  }
-  return true;
-};
+const customAnimateLayoutChanges: AnimateLayoutChanges = () => false;
 
 interface SortableDailyTaskRowProps {
   task: DailyTask;
@@ -155,8 +180,15 @@ interface SortableDailyTaskRowProps {
   ) => void;
   onCycleDailyPriority: (dayId: string, taskId: string) => void;
   onCycleDailyCategory?: (dayId: string, taskId: string) => void;
+  onCycleDailyRecurring?: (dayId: string, taskId: string) => void;
+  onSetDailyRecurring?: (
+    dayId: string,
+    taskId: string,
+    interval: RecurringInterval
+  ) => void;
   onUpdateDailyTaskText: (dayId: string, taskId: string, text: string) => void;
   onUpdateDailyTaskNotes?: (dayId: string, taskId: string, notes: string) => void;
+  onArchiveSingleDailyTask?: (dayId: string, taskId: string) => void;
   onQuickSave?: () => void;
 }
 
@@ -173,8 +205,11 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
   onToggleDailyTask,
   onCycleDailyPriority,
   onCycleDailyCategory,
+  onCycleDailyRecurring,
+  onSetDailyRecurring,
   onUpdateDailyTaskText,
   onUpdateDailyTaskNotes,
+  onArchiveSingleDailyTask,
   onQuickSave,
 }) => {
   const [isNotesExpanded, setIsNotesExpanded] = useState<boolean>(false);
@@ -184,7 +219,6 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({
     id: task.id,
@@ -192,16 +226,9 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
     animateLayoutChanges: customAnimateLayoutChanges,
   });
 
-  const isMoving = Boolean(
-    transform && (Math.abs(transform.x) > 1 || Math.abs(transform.y) > 1)
-  );
-
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition:
-      transition ||
-      (dndEnabled ? 'transform 200ms cubic-bezier(0.2, 0, 0, 1)' : undefined),
-    opacity: isDragging ? 0.3 : 1,
+    transform: isDragging ? CSS.Translate.toString(transform) : undefined,
+    opacity: isDragging ? 0.35 : 1,
     zIndex: isDragging ? 25 : 1,
   };
 
@@ -212,15 +239,16 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
     <motion.div
       ref={setNodeRef}
       style={style}
-      layout={dndEnabled && !isDragging && !isMoving ? 'position' : false}
+      layout={dndEnabled ? 'position' : false}
+      layoutId={`${instancePrefix}-task-${task.id}`}
       transition={{
         type: 'spring',
-        stiffness: 420,
-        damping: 32,
-        mass: 0.8,
+        stiffness: 350,
+        damping: 25,
+        mass: 0.7,
       }}
       data-testid={`${instancePrefix}-task-row-${task.id}`}
-      className={`rounded-md transition-all duration-150 ${
+      className={`rounded-md transition-colors duration-150 ${
         compact ? 'py-0.5' : 'py-0.5'
       } ${
         isDragging
@@ -337,7 +365,14 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
               if (nextInput) {
                 nextInput.focus();
               } else {
-                e.currentTarget.blur();
+                const quickAddInput = document.querySelector<HTMLInputElement>(
+                  `[data-quick-add-input="${instancePrefix}-${dayId}"]`
+                );
+                if (quickAddInput) {
+                  quickAddInput.focus();
+                } else {
+                  e.currentTarget.blur();
+                }
               }
             } else if (e.key === 'Escape') {
               e.preventDefault();
@@ -360,6 +395,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
             onClick={() => onCycleDailyCategory?.(dayId, task.id)}
             aria-label={`Category ${task.category} for ${task.text} (${instancePrefix}). Click to cycle.`}
             data-testid={`${instancePrefix}-category-badge-${task.id}`}
+            data-category-badge={task.category}
             title={`Category: ${task.category} (click to cycle)`}
             className={`rounded font-bold tracking-tight shrink-0 leading-none border transition-transform active:scale-95 cursor-pointer ${
               compact
@@ -375,6 +411,58 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
             }}
           >
             {task.category}
+          </button>
+        )}
+
+        {/* Recurrence Cadence Badge / Toggle */}
+        {!isBlank && (
+          <button
+            type="button"
+            onClick={() => onCycleDailyRecurring?.(dayId, task.id)}
+            aria-label={`Recurrence cadence for ${task.text || `${dayName} task ${idx + 1}`}: ${
+              task.recurring && task.recurring !== 'none'
+                ? task.recurring
+                : 'None (click to cycle)'
+            } (${instancePrefix})`}
+            data-testid={`${instancePrefix}-recurring-badge-${task.id}`}
+            data-recurring-badge={task.recurring ?? 'none'}
+            title={`Repeat: ${
+              task.recurring && task.recurring !== 'none'
+                ? RECURRING_CONFIG[task.recurring].label
+                : 'No repeat (click to cycle)'
+            }`}
+            className={`rounded font-bold tracking-tight shrink-0 inline-flex items-center gap-0.5 border transition-all active:scale-95 cursor-pointer leading-none ${
+              compact
+                ? 'px-1 py-0.5 text-[7px]'
+                : 'px-1.5 py-0.5 text-[8.5px]'
+            } ${
+              task.recurring && task.recurring !== 'none'
+                ? ''
+                : 'opacity-40 hover:opacity-100 hover:border-[#D5C9BD] hover:bg-[#FAF8F5]'
+            }`}
+            style={{
+              backgroundColor:
+                task.recurring && task.recurring !== 'none'
+                  ? RECURRING_CONFIG[task.recurring].bg
+                  : '#FAF7F2',
+              color:
+                task.recurring && task.recurring !== 'none'
+                  ? RECURRING_CONFIG[task.recurring].text
+                  : '#948B81',
+              borderColor:
+                task.recurring && task.recurring !== 'none'
+                  ? RECURRING_CONFIG[task.recurring].border
+                  : '#E6DFD5',
+            }}
+          >
+            <Repeat
+              className={`${
+                compact ? 'w-2 h-2' : 'w-2.5 h-2.5'
+              } shrink-0 stroke-[2.2]`}
+            />
+            {task.recurring && task.recurring !== 'none' && (
+              <span>{RECURRING_CONFIG[task.recurring].badgeLabel}</span>
+            )}
           </button>
         )}
 
@@ -420,6 +508,20 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
                 className="w-1.5 h-1.5 rounded-full bg-[#C87D55] absolute -top-0.5 -right-0.5 ring-1 ring-white"
               />
             )}
+          </button>
+        )}
+
+        {/* Individual Archive Button for Completed Daily Tasks */}
+        {!isBlank && task.completed && !compact && onArchiveSingleDailyTask && (
+          <button
+            type="button"
+            onClick={() => onArchiveSingleDailyTask(dayId, task.id)}
+            aria-label={`Archive completed ${dayName} task "${task.text}" (${instancePrefix})`}
+            data-testid={`${instancePrefix}-archive-task-${task.id}`}
+            title="Move completed task to Archive"
+            className="w-5 h-5 rounded flex items-center justify-center shrink-0 text-[#B8AFA6] hover:text-[#B05C37] hover:bg-[#F4EFE8] transition-colors cursor-pointer"
+          >
+            <Archive className="w-3 h-3" />
           </button>
         )}
       </div>
@@ -470,6 +572,50 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
             }}
             className="w-full bg-white border border-[#E2DBD0] focus:border-[#C87D55] focus:outline-none rounded-md px-2 py-1 text-[11px] leading-snug text-[#3B3632] placeholder:text-[#B5ADA3] resize-y"
           />
+
+          {/* Recurrence Interval Selector in Notes */}
+          <div className="pt-1.5 border-t border-[#ECE5DA] flex items-center justify-between gap-1.5">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-[#8C7A6B] whitespace-nowrap flex items-center gap-1">
+              <Repeat className="w-2.5 h-2.5" />
+              <span>Repeat</span>
+            </span>
+            <div
+              role="radiogroup"
+              aria-label={`Recurrence interval for ${task.text || 'task'}`}
+              className="inline-flex items-center gap-1"
+            >
+              {RECURRING_INTERVALS.map((interval) => {
+                const isSelected = (task.recurring ?? 'none') === interval;
+                const conf = RECURRING_CONFIG[interval];
+                return (
+                  <button
+                    key={interval}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    data-testid={`${instancePrefix}-notes-recurring-${interval}-${task.id}`}
+                    onClick={() =>
+                      onSetDailyRecurring
+                        ? onSetDailyRecurring(dayId, task.id, interval)
+                        : onCycleDailyRecurring?.(dayId, task.id)
+                    }
+                    className={`px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all cursor-pointer leading-none ${
+                      isSelected
+                        ? 'font-bold shadow-2xs'
+                        : 'opacity-70 hover:opacity-100 hover:bg-white'
+                    }`}
+                    style={{
+                      backgroundColor: isSelected ? conf.bg : '#FAF7F2',
+                      color: isSelected ? conf.text : '#736B63',
+                      borderColor: isSelected ? conf.border : '#E2DBD0',
+                    }}
+                  >
+                    {conf.shortLabel}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </motion.div>
@@ -499,7 +645,7 @@ const DroppableDayTasksContainer: React.FC<DroppableDayTasksContainerProps> = ({
     <div
       ref={setNodeRef}
       data-testid={`droppable-day-${dayId}`}
-      className={`flex-1 divide-y divide-[#F5F2EC] transition-all duration-200 rounded-b-xl relative min-h-[175px] ${
+      className={`flex-1 divide-y divide-[#F5F2EC] transition-all duration-200 relative min-h-[175px] ${
         compact ? 'p-1.5 space-y-0.5' : 'p-1.5 space-y-0.5'
       } ${
         isOver
@@ -522,6 +668,107 @@ const DroppableDayTasksContainer: React.FC<DroppableDayTasksContainerProps> = ({
   );
 };
 
+export interface DayCircularProgressProps {
+  percentage: number;
+  total: number;
+  completed: number;
+  compact?: boolean;
+  accentColor?: string;
+  dayName: string;
+  testId?: string;
+}
+
+export const DayCircularProgress: React.FC<DayCircularProgressProps> = ({
+  percentage,
+  total,
+  completed,
+  compact = false,
+  accentColor = '#2F2B28',
+  dayName,
+  testId,
+}) => {
+  const size = compact ? 18 : 22;
+  const strokeWidth = compact ? 2 : 2.4;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clampedPercentage = Math.min(100, Math.max(0, Math.round(percentage)));
+  const strokeDashoffset =
+    circumference - (clampedPercentage / 100) * circumference;
+  const isAllDone = total > 0 && completed === total;
+
+  // Ring stroke color matches the currently selected theme
+  const strokeColor = clampedPercentage > 0 ? accentColor : '#C4BCB1';
+
+  return (
+    <div
+      role="progressbar"
+      aria-valuenow={clampedPercentage}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`${dayName} progress: ${clampedPercentage}% (${completed} of ${total} tasks completed)`}
+      title={`${dayName}: ${clampedPercentage}% completed (${completed}/${total})`}
+      data-testid={testId}
+      data-percentage={clampedPercentage}
+      data-theme-color={accentColor}
+      className={`relative inline-flex items-center justify-center shrink-0 transition-transform hover:scale-105 select-none ${
+        compact ? 'w-[18px] h-[18px]' : 'w-[22px] h-[22px]'
+      }`}
+    >
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="transform -rotate-90 block"
+      >
+        {/* Background track circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill={isAllDone ? `${accentColor}20` : 'rgba(255, 255, 255, 0.55)'}
+          stroke="rgba(0, 0, 0, 0.08)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Dynamic progress stroke matching selected theme */}
+        {total > 0 && (
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            className="transition-all duration-300 ease-out"
+          />
+        )}
+      </svg>
+      {/* Center label: checkmark if complete, percentage if in progress (styled with theme color) */}
+      <span
+        className={`absolute inset-0 flex items-center justify-center font-black leading-none tabular-nums ${
+          compact ? 'text-[7px]' : 'text-[7.5px]'
+        }`}
+        style={{
+          color: clampedPercentage > 0 ? accentColor : '#8A8279',
+        }}
+      >
+        {isAllDone ? (
+          <Check
+            className={`${
+              compact ? 'w-2 h-2' : 'w-2.5 h-2.5'
+            } stroke-[3.5]`}
+            style={{ color: accentColor }}
+          />
+        ) : (
+          `${clampedPercentage}%`
+        )}
+      </span>
+    </div>
+  );
+};
+
 export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
   columns,
   monthlyGoals,
@@ -538,7 +785,10 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
   onToggleDailyTask,
   onCycleDailyPriority,
   onCycleDailyCategory,
+  onCycleDailyRecurring,
+  onSetDailyRecurring,
   onUpdateDailyTaskText,
+  onQuickAddDailyTask,
   onUpdateDailyTaskNotes,
   enableTaskNotes = false,
   onReorderOrMoveDailyTask,
@@ -556,14 +806,81 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
   compact = false,
   instancePrefix = 'main',
   onQuickSave,
+  archivedCount = 0,
+  onArchiveCompletedTasks,
+  onArchiveSingleDailyTask,
+  onOpenArchiveModal,
 }) => {
   const theme = THEMES[activeTheme];
   const isSearching = searchQuery.trim().length > 0;
-  const dndActive =
-    enableDragAndDrop && Boolean(onReorderOrMoveDailyTask) && !isSearching;
-
+  const [activeTagFilter, setActiveTagFilter] = useState<'All' | TaskCategory>(
+    'All'
+  );
+  const [quickAddValues, setQuickAddValues] = useState<Record<string, string>>(
+    {}
+  );
+  const [quickAddCategories, setQuickAddCategories] = useState<
+    Record<string, TaskCategory>
+  >({});
+  const [quickAddRecurring, setQuickAddRecurring] = useState<
+    Record<string, RecurringInterval>
+  >({});
   const [bulkMenuOpen, setBulkMenuOpen] = useState<boolean>(false);
   const bulkMenuRef = useRef<HTMLDivElement>(null);
+
+  const isFiltering = isSearching || activeTagFilter !== 'All';
+  const dndActive =
+    enableDragAndDrop && Boolean(onReorderOrMoveDailyTask) && !isFiltering;
+
+  const handleCycleQuickAddCategory = (dayId: string) => {
+    setQuickAddCategories((prev) => {
+      const current = prev[dayId] ?? 'Work';
+      return {
+        ...prev,
+        [dayId]: cycleCategory(current),
+      };
+    });
+  };
+
+  const handleCycleQuickAddRecurring = (dayId: string) => {
+    setQuickAddRecurring((prev) => {
+      const current = prev[dayId] ?? 'none';
+      return {
+        ...prev,
+        [dayId]: cycleRecurringInterval(current),
+      };
+    });
+  };
+
+  const handleQuickAddSubmit = (dayId: string) => {
+    const rawDraft = quickAddValues[dayId] ?? '';
+    const cleanText = sanitizeTaskText(rawDraft).trim();
+    if (!cleanText || cleanText === '—') return;
+    const selectedCategory = quickAddCategories[dayId] ?? 'Work';
+    const selectedRecurring = quickAddRecurring[dayId] ?? 'none';
+
+    if (onQuickAddDailyTask) {
+      onQuickAddDailyTask(
+        dayId,
+        cleanText,
+        selectedCategory,
+        selectedRecurring
+      );
+    } else {
+      const targetColumn = columns.find((c) => c.id === dayId);
+      const firstBlank = targetColumn?.tasks.find(
+        (t) => t.text.trim().length === 0 || t.text.trim() === '—'
+      );
+      if (firstBlank) {
+        onUpdateDailyTaskText(dayId, firstBlank.id, cleanText);
+      }
+    }
+
+    setQuickAddValues((prev) => ({
+      ...prev,
+      [dayId]: '',
+    }));
+  };
 
   useEffect(() => {
     if (!bulkMenuOpen) return;
@@ -653,23 +970,45 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
     searchQuery
   );
 
-  const filteredColumns = isSearching
+  const keywordFilteredColumns = isSearching
     ? filterDayColumnsByKeyword(columns, searchQuery)
     : columns;
 
+  const filteredColumns =
+    activeTagFilter !== 'All'
+      ? filterDayColumnsByCategory(keywordFilteredColumns, activeTagFilter)
+      : keywordFilteredColumns;
+
   const displayedColumns =
-    visibleColumnSlice && !isSearching
+    visibleColumnSlice && !isSearching && activeTagFilter === 'All'
       ? filteredColumns.slice(visibleColumnSlice[0], visibleColumnSlice[1])
       : filteredColumns;
+
+  const activeTasksForTagCounts =
+    activeView === 'month'
+      ? monthlyGoals
+      : activeView === 'year'
+      ? yearlyGoals
+      : columns.flatMap((c) => c.tasks);
+
+  const categoryCounts = countTasksByCategory(activeTasksForTagCounts);
+  const totalActiveTaggedTasks = Object.values(categoryCounts).reduce(
+    (sum, c) => sum + c,
+    0
+  );
 
   const hasAnyActiveTasks = columns.some((col) =>
     col.tasks.some((t) => t.text.trim().length > 0)
   );
 
   const renderGoalView = (mode: 'month' | 'year', goals: DetailedTask[]) => {
-    const filteredGoals = isSearching
+    const keywordGoals = isSearching
       ? filterDetailedTasksByKeyword(goals, searchQuery)
       : goals;
+    const filteredGoals =
+      activeTagFilter !== 'All'
+        ? filterTasksByCategory(keywordGoals, activeTagFilter)
+        : keywordGoals;
 
     const completedCount = goals.filter(
       (g) => g.completed && g.text.trim().length > 0
@@ -712,18 +1051,31 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
         {filteredGoals.length === 0 ? (
           <div className="bg-white rounded-xl border border-[#ECE7DF] p-8 text-center">
             <p className="text-xs font-semibold text-[#7A7269] mb-2">
-              No {mode === 'month' ? 'monthly' : 'yearly'} tasks match &ldquo;
-              {searchQuery}&rdquo;
+              No {mode === 'month' ? 'monthly' : 'yearly'} tasks match{' '}
+              {activeTagFilter !== 'All'
+                ? `tag "${activeTagFilter}"`
+                : `“${searchQuery}”`}
             </p>
-            {onSearchQueryChange && (
-              <button
-                type="button"
-                onClick={() => onSearchQueryChange('')}
-                className="text-xs font-bold text-[#B86B43] hover:underline cursor-pointer"
-              >
-                Clear search filter
-              </button>
-            )}
+            <div className="flex items-center justify-center gap-3">
+              {activeTagFilter !== 'All' && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTagFilter('All')}
+                  className="text-xs font-bold text-[#B86B43] hover:underline cursor-pointer"
+                >
+                  Show all tags
+                </button>
+              )}
+              {isSearching && onSearchQueryChange && (
+                <button
+                  type="button"
+                  onClick={() => onSearchQueryChange('')}
+                  className="text-xs font-bold text-[#B86B43] hover:underline cursor-pointer"
+                >
+                  Clear search filter
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white rounded-xl border border-[#ECE7DF] p-2.5 sm:p-3.5">
@@ -782,23 +1134,14 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       }`}
                     />
 
-                    <VoiceMicButton
-                      currentText={goal.text}
-                      onUpdateText={(newText) =>
-                        onUpdateGoalText?.(mode, goal.id, newText)
-                      }
-                      ariaLabel={`Dictate ${mode} goal ${goal.id} (${instancePrefix})`}
-                      compact={compact}
-                      accentColor={theme.checkboxBg}
-                    />
-
-                    {/* Small Colored Category Badge */}
+                    {/* Small Colored Category Badge Next to Goal Name */}
                     {goal.text.trim().length > 0 && (
                       <button
                         type="button"
                         onClick={() => onCycleGoalCategory?.(mode, goal.id)}
                         aria-label={`Category ${goal.category} for ${goal.text}. Click to cycle.`}
                         data-testid={`${instancePrefix}-goal-category-badge-${goal.id}`}
+                        data-category-badge={goal.category}
                         title={`Category: ${goal.category} (click to cycle)`}
                         className="px-2 py-0.5 rounded text-[9px] font-bold shrink-0 border cursor-pointer transition-transform active:scale-95 leading-none"
                         style={{
@@ -816,10 +1159,21 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       </button>
                     )}
 
+                    <VoiceMicButton
+                      currentText={goal.text}
+                      onUpdateText={(newText) =>
+                        onUpdateGoalText?.(mode, goal.id, newText)
+                      }
+                      ariaLabel={`Dictate ${mode} goal ${goal.id} (${instancePrefix})`}
+                      compact={compact}
+                      accentColor={theme.checkboxBg}
+                    />
+
                     <button
                       type="button"
                       onClick={() => onCycleGoalPriority?.(mode, goal.id)}
                       aria-label={`Priority ${goal.priority} for ${goal.text}. Click to cycle.`}
+                      data-priority-pill={goal.priority}
                       className="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 cursor-pointer transition-transform active:scale-95"
                       style={{
                         backgroundColor: PRIORITY_PILL_STYLES[goal.priority].bg,
@@ -833,6 +1187,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       type="button"
                       onClick={() => onCycleGoalStatus?.(mode, goal.id)}
                       aria-label={`Status ${goal.status} for ${goal.text}. Click to cycle.`}
+                      data-status-pill={goal.status}
                       className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 cursor-pointer transition-transform active:scale-95"
                       style={{
                         backgroundColor: STATUS_PILL_STYLES[goal.status].bg,
@@ -857,15 +1212,21 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
         compact ? 'p-2.5 md:p-3.5' : 'p-3 sm:p-3.5 md:p-4'
       } select-none`}
     >
-      {/* Top Row: Title + View Tabs */}
+      {/* Top Row: Title + Built-in 25m Focus Timer + View Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-2">
-        <h3
-          className={`font-bold tracking-tight text-[#2F2B28] ${
-            compact ? 'text-base md:text-lg' : 'text-lg sm:text-xl md:text-[22px]'
-          }`}
-        >
-          Weekly To-Do List
-        </h3>
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          <h3
+            className={`font-bold tracking-tight text-[#2F2B28] ${
+              compact ? 'text-base md:text-lg' : 'text-lg sm:text-xl md:text-[22px]'
+            }`}
+          >
+            Weekly To-Do List
+          </h3>
+
+          {!compact && (
+            <PomodoroTimer instanceId={instancePrefix || 'weekly'} />
+          )}
+        </div>
 
         {/* Segmented Control: This Week | This Month | This Year */}
         <div
@@ -1059,7 +1420,33 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
-          {showBulkActions && (onClearCompletedTasks || onClearPendingTasks) && (
+          {!compact && onArchiveCompletedTasks && completionCounts.completedCount > 0 && (
+            <button
+              type="button"
+              onClick={onArchiveCompletedTasks}
+              data-testid={`${instancePrefix}-archive-completed-btn`}
+              title="Move all completed tasks to Archive to declutter the daily view"
+              className="inline-flex items-center gap-1.5 bg-[#F5DFD0] hover:bg-[#EED2BF] border border-[#E5C5AF] rounded-full px-3 py-1 text-[11px] font-bold text-[#9A4E28] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <Archive className="w-3 h-3" />
+              <span>Archive Completed ({completionCounts.completedCount})</span>
+            </button>
+          )}
+
+          {!compact && onOpenArchiveModal && (
+            <button
+              type="button"
+              onClick={onOpenArchiveModal}
+              data-testid={`${instancePrefix}-open-archive-btn`}
+              title="Open Completed Task Archive (Press A)"
+              className="inline-flex items-center gap-1.5 bg-white hover:bg-[#F3EFE9] border border-[#E0D9CE] rounded-full px-3 py-1 text-[11px] font-semibold text-[#5A534C] transition-colors cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <Archive className="w-3 h-3 text-[#B86741]" />
+              <span>Archive ({archivedCount})</span>
+            </button>
+          )}
+
+          {showBulkActions && (onClearCompletedTasks || onClearPendingTasks || onArchiveCompletedTasks) && (
             <div ref={bulkMenuRef} className="relative">
               <button
                 type="button"
@@ -1085,8 +1472,27 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                   role="menu"
                   aria-label={`Bulk Actions (${instancePrefix})`}
                   data-testid={`${instancePrefix}-bulk-actions-menu`}
-                  className="absolute right-0 mt-1.5 w-60 max-w-[calc(100vw-2rem)] bg-[#FDFBF7] border border-[#E5DEC9] rounded-xl shadow-[0_14px_32px_-8px_rgba(47,43,40,0.18)] py-1.5 z-40"
+                  className="absolute right-0 mt-1.5 w-64 max-w-[calc(100vw-2rem)] bg-[#FDFBF7] border border-[#E5DEC9] rounded-xl shadow-[0_14px_32px_-8px_rgba(47,43,40,0.18)] py-1.5 z-40"
                 >
+                  {onArchiveCompletedTasks && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      data-testid={`${instancePrefix}-menu-archive-completed-btn`}
+                      disabled={completionCounts.completedCount === 0}
+                      onClick={() => {
+                        onArchiveCompletedTasks();
+                        setBulkMenuOpen(false);
+                      }}
+                      className="w-full px-3.5 py-2 text-left text-xs font-semibold text-[#3B3530] hover:bg-[#F4EFE6] disabled:opacity-45 disabled:pointer-events-none flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                    >
+                      <span>Archive Completed tasks</span>
+                      <span className="text-[10px] font-bold bg-[#F5DFD0] text-[#B05C37] px-2 py-0.5 rounded-full tabular-nums">
+                        {completionCounts.completedCount}
+                      </span>
+                    </button>
+                  )}
+
                   {onClearCompletedTasks && (
                     <button
                       type="button"
@@ -1144,6 +1550,75 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
         </div>
       </div>
 
+      {/* Interactive Color-Coded Tag Filter Bar */}
+      {!compact && (
+        <div
+          data-testid={`${instancePrefix}-tag-filter-bar`}
+          role="group"
+          aria-label={`Filter tasks by tag (${instancePrefix})`}
+          className="flex flex-wrap items-center gap-1.5 mb-2.5"
+        >
+          <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] mr-0.5">
+            TAGS
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveTagFilter('All')}
+            aria-pressed={activeTagFilter === 'All'}
+            data-testid={`${instancePrefix}-tag-filter-All`}
+            className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums ${
+              activeTagFilter === 'All'
+                ? 'bg-[#2F2B28] text-white border-[#2F2B28] shadow-2xs'
+                : 'bg-white text-[#5A534C] border-[#DED8CE] hover:bg-[#F3EFE9]'
+            }`}
+          >
+            All ({totalActiveTaggedTasks})
+          </button>
+          {TASK_CATEGORIES.map((cat) => {
+            const isSelected = activeTagFilter === cat;
+            const count = categoryCounts[cat] ?? 0;
+            const style = CATEGORY_BADGE_STYLES[cat];
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() =>
+                  setActiveTagFilter((prev) => (prev === cat ? 'All' : cat))
+                }
+                aria-pressed={isSelected}
+                data-testid={`${instancePrefix}-tag-filter-${cat}`}
+                data-category-badge={cat}
+                title={`Filter by ${cat} tag (${count} task${
+                  count === 1 ? '' : 's'
+                })`}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums ${
+                  isSelected
+                    ? 'ring-2 ring-[#2F2B28]/45 scale-105 shadow-2xs'
+                    : 'opacity-85 hover:opacity-100'
+                }`}
+                style={{
+                  backgroundColor: style.bg,
+                  color: style.text,
+                  borderColor: style.border,
+                }}
+              >
+                {cat} ({count})
+              </button>
+            );
+          })}
+          {activeTagFilter !== 'All' && (
+            <button
+              type="button"
+              onClick={() => setActiveTagFilter('All')}
+              data-testid={`${instancePrefix}-tag-filter-reset`}
+              className="text-[10px] font-semibold text-[#8A8279] hover:text-[#2F2B28] underline ml-1 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              Show all
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Active View Body */}
       {activeView === 'week' && (
         <DndContext
@@ -1154,8 +1629,9 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
           onDragEnd={handleDragEnd}
           onDragCancel={handleDragCancel}
         >
-          <div
-            className={`grid ${compact ? 'gap-1.5' : 'gap-2.5'} ${
+          <LayoutGroup id={`${instancePrefix}-week-board`}>
+            <div
+              className={`grid ${compact ? 'gap-1.5' : 'gap-2.5'} ${
               displayedColumns.length === 4
                 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'
                 : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7'
@@ -1183,25 +1659,37 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                 >
                   {/* Day Header */}
                   <div
+                    data-day-header="true"
                     className={`${
                       compact ? 'px-2 py-1.5' : 'px-2.5 py-1.5'
-                    } rounded-t-xl flex items-center justify-between gap-1 transition-colors duration-200`}
+                    } rounded-t-xl flex items-center justify-between gap-1.5 transition-colors duration-200`}
                     style={{ backgroundColor: headerColor }}
                   >
-                    <div className="min-w-0">
-                      <div
-                        className={`font-bold text-[#332C27] leading-tight truncate ${
-                          compact ? 'text-[10px]' : 'text-xs sm:text-[13px]'
-                        }`}
-                      >
-                        {col.dayName}
-                      </div>
-                      <div
-                        className={`text-[#594E45] font-medium truncate ${
-                          compact ? 'text-[8px]' : 'text-[10px]'
-                        }`}
-                      >
-                        {col.dateLabel}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <DayCircularProgress
+                        percentage={progress.percentage}
+                        total={progress.total}
+                        completed={progress.completed}
+                        compact={compact}
+                        accentColor={theme.progressFill}
+                        dayName={col.dayName}
+                        testId={`${instancePrefix}-day-progress-ring-${col.id}`}
+                      />
+                      <div className="min-w-0">
+                        <div
+                          className={`font-bold text-[#332C27] leading-tight truncate ${
+                            compact ? 'text-[10px]' : 'text-xs sm:text-[13px]'
+                          }`}
+                        >
+                          {col.dayName}
+                        </div>
+                        <div
+                          className={`text-[#594E45] font-medium truncate ${
+                            compact ? 'text-[8px]' : 'text-[10px]'
+                          }`}
+                        >
+                          {col.dateLabel}
+                        </div>
                       </div>
                     </div>
 
@@ -1254,8 +1742,11 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                             onToggleDailyTask={onToggleDailyTask}
                             onCycleDailyPriority={onCycleDailyPriority}
                             onCycleDailyCategory={onCycleDailyCategory}
+                            onCycleDailyRecurring={onCycleDailyRecurring}
+                            onSetDailyRecurring={onSetDailyRecurring}
                             onUpdateDailyTaskText={onUpdateDailyTaskText}
                             onUpdateDailyTaskNotes={onUpdateDailyTaskNotes}
+                            onArchiveSingleDailyTask={onArchiveSingleDailyTask}
                             onQuickSave={onQuickSave}
                           />
                         ))
@@ -1266,8 +1757,8 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                   {/* Column Progress Bar */}
                   <div
                     className={`${
-                      compact ? 'px-1.5 py-1.5 gap-1.5' : 'px-2.5 py-1.5 gap-2'
-                    } rounded-b-xl bg-[#FCFBF9] border-t border-[#F2EFE9] flex items-center`}
+                      compact ? 'px-1.5 py-1 gap-1.5' : 'px-2.5 py-1.5 gap-2'
+                    } bg-[#FCFBF9] border-t border-[#F2EFE9] flex items-center`}
                   >
                     <div className="flex-1 h-1.5 bg-[#EFECE6] rounded-full overflow-hidden">
                       <div
@@ -1298,12 +1789,159 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       {progress.fractionLabel}
                     </span>
                   </div>
+
+                  {/* Bottom Quick-Add Task Input Field */}
+                  <div
+                    data-testid={`${instancePrefix}-quick-add-row-${col.id}`}
+                    className={`${
+                      compact ? 'px-1.5 py-1' : 'px-2 py-1.5'
+                    } rounded-b-xl bg-[#FAF7F2] border-t border-[#ECE7DF] flex items-center gap-1`}
+                  >
+                    <Plus
+                      aria-hidden="true"
+                      className={`${
+                        compact ? 'w-2.5 h-2.5' : 'w-3 h-3'
+                      } text-[#9C948B] shrink-0`}
+                    />
+                    <input
+                      type="text"
+                      value={quickAddValues[col.id] ?? ''}
+                      placeholder={
+                        compact ? 'Add task…' : 'Add task… (Enter)'
+                      }
+                      aria-label={`Quick add task to ${col.dayName} (${instancePrefix})`}
+                      data-testid={`${instancePrefix}-quick-add-input-${col.id}`}
+                      data-quick-add-input={`${instancePrefix}-${col.id}`}
+                      data-day-quick-add={col.id}
+                      onChange={(e) => {
+                        const val = sanitizeTaskText(e.target.value);
+                        setQuickAddValues((prev) => ({
+                          ...prev,
+                          [col.id]: val,
+                        }));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.nativeEvent.isComposing) return;
+                        if (
+                          e.key === 'Enter' &&
+                          !e.shiftKey &&
+                          !e.altKey &&
+                          !e.ctrlKey &&
+                          !e.metaKey
+                        ) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleQuickAddSubmit(col.id);
+                        } else if (
+                          (e.ctrlKey || e.metaKey) &&
+                          e.key === 'Enter'
+                        ) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleQuickAddSubmit(col.id);
+                          onQuickSave?.();
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if ((quickAddValues[col.id] ?? '').length > 0) {
+                            setQuickAddValues((prev) => ({
+                              ...prev,
+                              [col.id]: '',
+                            }));
+                          } else {
+                            e.currentTarget.blur();
+                          }
+                        }
+                      }}
+                      className={`w-full min-w-0 bg-white border border-[#E2DBD0] focus:border-[#C87D55] focus:outline-none rounded-md font-medium text-[#3B3632] placeholder:text-[#9C948B] transition-colors ${
+                        compact
+                          ? 'text-[9px] px-1 py-0.5'
+                          : 'text-[11px] sm:text-xs px-1.5 py-0.5'
+                      }`}
+                    />
+                    {(() => {
+                      const quickCat = quickAddCategories[col.id] ?? 'Work';
+                      const catStyle = CATEGORY_BADGE_STYLES[quickCat];
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleCycleQuickAddCategory(col.id)}
+                          aria-label={`New ${col.dayName} task tag: ${quickCat} (${instancePrefix}). Click to cycle.`}
+                          data-testid={`${instancePrefix}-quick-add-category-${col.id}`}
+                          data-category-badge={quickCat}
+                          title={`Tag for new task: ${quickCat} (click to cycle)`}
+                          className={`rounded font-bold tracking-tight shrink-0 leading-none border transition-transform active:scale-95 cursor-pointer whitespace-nowrap ${
+                            compact
+                              ? 'px-1 py-0.5 text-[7px]'
+                              : 'px-1.5 py-0.5 text-[8.5px]'
+                          }`}
+                          style={{
+                            backgroundColor: catStyle.bg,
+                            color: catStyle.text,
+                            borderColor: catStyle.border,
+                          }}
+                        >
+                          {quickCat}
+                        </button>
+                      );
+                    })()}
+                    {(() => {
+                      const quickRec = quickAddRecurring[col.id] ?? 'none';
+                      const recConf = RECURRING_CONFIG[quickRec];
+                      const isRecActive = quickRec !== 'none';
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => handleCycleQuickAddRecurring(col.id)}
+                          aria-label={`New ${col.dayName} repeat cadence: ${recConf.label} (${instancePrefix}). Click to cycle.`}
+                          data-testid={`${instancePrefix}-quick-add-recurring-${col.id}`}
+                          data-recurring-badge={quickRec}
+                          title={`Repeat cadence for new task: ${recConf.label} (click to cycle)`}
+                          className={`rounded font-bold tracking-tight shrink-0 leading-none border transition-transform active:scale-95 cursor-pointer whitespace-nowrap inline-flex items-center gap-0.5 ${
+                            compact
+                              ? 'px-1 py-0.5 text-[7px]'
+                              : 'px-1.5 py-0.5 text-[8.5px]'
+                          } ${
+                            isRecActive
+                              ? ''
+                              : 'opacity-50 hover:opacity-100 hover:border-[#D5C9BD] hover:bg-white'
+                          }`}
+                          style={{
+                            backgroundColor: isRecActive ? recConf.bg : '#FAF7F2',
+                            color: isRecActive ? recConf.text : '#736B63',
+                            borderColor: isRecActive ? recConf.border : '#E2DBD0',
+                          }}
+                        >
+                          <Repeat className="w-2.5 h-2.5 shrink-0 stroke-[2.2]" />
+                          <span>{recConf.shortLabel}</span>
+                        </button>
+                      );
+                    })()}
+                    {(quickAddValues[col.id] ?? '').trim().length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickAddSubmit(col.id)}
+                        aria-label={`Submit new ${col.dayName} task (${instancePrefix})`}
+                        data-testid={`${instancePrefix}-quick-add-submit-${col.id}`}
+                        title="Press Enter or click to add task"
+                        className={`${
+                          compact
+                            ? 'px-1 py-0.5 text-[8px]'
+                            : 'px-1.5 py-0.5 text-[9.5px]'
+                        } font-bold text-white rounded transition-transform active:scale-95 cursor-pointer shrink-0 leading-none`}
+                        style={{ backgroundColor: theme.checkboxBg }}
+                      >
+                        ↵
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
+        </LayoutGroup>
 
-          <DragOverlay dropAnimation={dropAnimationConfig}>
+        <DragOverlay dropAnimation={dropAnimationConfig}>
             {activeDragTask ? (
               <motion.div
                 initial={{ scale: 1, rotate: 0 }}
@@ -1325,6 +1963,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                 </span>
                 {activeDragTask.text.trim().length > 0 && (
                   <span
+                    data-category-badge={activeDragTask.category}
                     className="px-1.5 py-0.5 rounded text-[9px] font-bold border leading-none shrink-0"
                     style={{
                       backgroundColor:

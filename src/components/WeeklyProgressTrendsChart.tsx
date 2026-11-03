@@ -106,30 +106,30 @@ export const WeeklyProgressTrendsChart: React.FC<
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
-              stroke="#EFECE6"
+              stroke="var(--chart-grid-stroke, #EFECE6)"
             />
             <XAxis
               dataKey="weekLabel"
-              tick={{ fill: '#5A534C', fontSize: 11, fontWeight: 700 }}
-              axisLine={{ stroke: '#E5DEC9' }}
+              tick={{ fill: 'var(--chart-tick-primary, #5A534C)', fontSize: 11, fontWeight: 700 }}
+              axisLine={{ stroke: 'var(--chart-axis-stroke, #E5DEC9)' }}
               tickLine={false}
             />
             <YAxis
               allowDecimals={false}
-              tick={{ fill: '#8A8279', fontSize: 11, fontWeight: 600 }}
+              tick={{ fill: 'var(--chart-tick-secondary, #8A8279)', fontSize: 11, fontWeight: 600 }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
-              cursor={{ fill: '#FAF6F0' }}
+              cursor={{ fill: 'var(--chart-cursor-fill, #FAF6F0)' }}
               contentStyle={{
-                backgroundColor: '#FDFBF7',
-                borderColor: '#E5DEC9',
+                backgroundColor: 'var(--chart-tooltip-bg, #FDFBF7)',
+                borderColor: 'var(--chart-tooltip-border, #E5DEC9)',
                 borderRadius: '12px',
                 fontSize: '12px',
                 fontWeight: 600,
-                color: '#2F2B28',
-                boxShadow: '0 10px 24px -6px rgba(47,43,40,0.12)',
+                color: 'var(--chart-tooltip-text, #2F2B28)',
+                boxShadow: '0 10px 24px -6px rgba(0,0,0,0.22)',
               }}
               formatter={(value, name) => [
                 `${value ?? 0} tasks`,
@@ -162,7 +162,7 @@ export const WeeklyProgressTrendsChart: React.FC<
               dataKey="pending"
               name="pending"
               stackId={chartMode === 'stacked' ? 'tasks' : undefined}
-              fill="#DFD8CE"
+              fill="var(--chart-pending-fill, #DFD8CE)"
               radius={[6, 6, 0, 0]}
             />
           </BarChart>

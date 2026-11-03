@@ -32,6 +32,65 @@ export const CATEGORY_BADGE_STYLES: Record<
   Growth: { bg: '#F7E3EC', text: '#8C3B61', border: '#EBC5D6' },
 };
 
+export type RecurringInterval = 'none' | 'daily' | 'weekly' | 'monthly';
+
+export const RECURRING_INTERVALS: RecurringInterval[] = [
+  'none',
+  'daily',
+  'weekly',
+  'monthly',
+];
+
+export const RECURRING_CONFIG: Record<
+  RecurringInterval,
+  {
+    label: string;
+    shortLabel: string;
+    badgeLabel: string;
+    bg: string;
+    text: string;
+    border: string;
+    description: string;
+  }
+> = {
+  none: {
+    label: 'None',
+    shortLabel: 'Once',
+    badgeLabel: 'Once',
+    bg: '#F3EFE9',
+    text: '#8A8175',
+    border: '#E2DBD0',
+    description: 'Task does not recur',
+  },
+  daily: {
+    label: 'Daily',
+    shortLabel: 'Daily',
+    badgeLabel: 'Daily',
+    bg: '#EAF5F0',
+    text: '#206A4E',
+    border: '#BFE4D3',
+    description: 'Recurs daily upon completion',
+  },
+  weekly: {
+    label: 'Weekly',
+    shortLabel: 'Weekly',
+    badgeLabel: 'Weekly',
+    bg: '#EBF1FA',
+    text: '#22558D',
+    border: '#C4D8F3',
+    description: 'Recurs weekly upon completion',
+  },
+  monthly: {
+    label: 'Monthly',
+    shortLabel: 'Monthly',
+    badgeLabel: 'Monthly',
+    bg: '#F6ECF7',
+    text: '#722880',
+    border: '#E8CAEC',
+    description: 'Recurs monthly upon completion',
+  },
+};
+
 export interface DailyTask {
   id: string;
   text: string;
@@ -40,6 +99,7 @@ export interface DailyTask {
   status: TaskStatus;
   category: TaskCategory;
   notes?: string;
+  recurring?: RecurringInterval;
 }
 
 export interface DayColumn {
@@ -57,6 +117,23 @@ export interface DetailedTask {
   priority: Priority;
   status: TaskStatus;
   category: TaskCategory;
+  recurring?: RecurringInterval;
+}
+
+export interface ArchivedTask {
+  archiveId: string;
+  originalTaskId: string;
+  text: string;
+  priority: Priority;
+  category: TaskCategory;
+  notes?: string;
+  recurring?: RecurringInterval;
+  sourceType: 'daily' | 'detailed';
+  sourceDayId?: string;
+  sourceLabel: string;
+  linkedDetailedTaskId?: string;
+  linkedDetailedText?: string;
+  archivedAt: string;
 }
 
 export interface ThemePalette {
@@ -158,6 +235,15 @@ export function cycleCategory(current: TaskCategory): TaskCategory {
   return TASK_CATEGORIES[(idx + 1) % TASK_CATEGORIES.length];
 }
 
+export function cycleRecurringInterval(
+  current?: RecurringInterval
+): RecurringInterval {
+  if (current === 'none' || !current) return 'daily';
+  if (current === 'daily') return 'weekly';
+  if (current === 'weekly') return 'monthly';
+  return 'none';
+}
+
 export function toggleTaskCompletion<
   T extends { completed: boolean; status: TaskStatus }
 >(task: T): T {
@@ -219,6 +305,7 @@ export interface DashboardMetrics {
     'In Progress': number;
     Done: number;
   };
+  byCategory: Record<TaskCategory, number>;
 }
 
 export function calculateDashboardMetrics(
@@ -240,9 +327,14 @@ export function calculateDashboardMetrics(
     col.tasks.filter((t) => t.text.trim().length > 0 && t.text.trim() !== '—')
   );
 
-  const allTasks: Array<{ completed: boolean; priority: Priority; status: TaskStatus }> = [
+  const allTasks: Array<{
+    completed: boolean;
+    priority: Priority;
+    status: TaskStatus;
+    category?: TaskCategory;
+  }> = [
     ...activeDailyTasks,
-    ...extraTasks.filter((t) => t.text.trim().length > 0),
+    ...extraTasks.filter((t) => t.text.trim().length > 0 && t.text.trim() !== '—'),
   ];
 
   const totalTasks = activeDailyTasks.length;
@@ -262,9 +354,21 @@ export function calculateDashboardMetrics(
     Done: 0,
   };
 
+  const byCategory: Record<TaskCategory, number> = {
+    Work: 0,
+    Personal: 0,
+    Health: 0,
+    Finance: 0,
+    Home: 0,
+    Growth: 0,
+  };
+
   for (const t of allTasks) {
     byPriority[t.priority] = (byPriority[t.priority] || 0) + 1;
     byStatus[t.status] = (byStatus[t.status] || 0) + 1;
+    const cat: TaskCategory =
+      t.category && TASK_CATEGORIES.includes(t.category) ? t.category : 'Work';
+    byCategory[cat] = (byCategory[cat] || 0) + 1;
   }
 
   return {
@@ -274,6 +378,7 @@ export function calculateDashboardMetrics(
     dailyProgress,
     byPriority,
     byStatus,
+    byCategory,
   };
 }
 
@@ -353,9 +458,9 @@ export function createInitialWeekColumns(): DayColumn[] {
       dateLabel: 'Jun 11',
       isToday: true,
       tasks: [
-        { id: 'thu-1', text: 'Prepare presentation', completed: false, priority: 'High', status: 'In Progress', category: 'Work', notes: 'Include Q2 metrics slide and product roadmap timeline' },
-        { id: 'thu-2', text: 'Submit expense report', completed: true, priority: 'Med', status: 'Done', category: 'Finance', notes: '' },
-        { id: 'thu-3', text: 'Exercise - walk dog', completed: false, priority: 'Low', status: 'To Do', category: 'Health', notes: '' },
+        { id: 'thu-1', text: 'Prepare presentation', completed: false, priority: 'High', status: 'In Progress', category: 'Work', notes: 'Include Q2 metrics slide and product roadmap timeline', recurring: 'none' },
+        { id: 'thu-2', text: 'Submit expense report', completed: true, priority: 'Med', status: 'Done', category: 'Finance', notes: '', recurring: 'weekly' },
+        { id: 'thu-3', text: 'Exercise - walk dog', completed: false, priority: 'Low', status: 'To Do', category: 'Health', notes: '', recurring: 'daily' },
         { id: 'thu-4', text: '', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
         { id: 'thu-5', text: '', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
         { id: 'thu-6', text: '', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
@@ -367,7 +472,7 @@ export function createInitialWeekColumns(): DayColumn[] {
       dateLabel: 'Jun 12',
       tasks: [
         { id: 'fri-1', text: 'Clean bathroom', completed: false, priority: 'Low', status: 'To Do', category: 'Home', notes: '' },
-        { id: 'fri-2', text: 'Read for 30 minutes', completed: true, priority: 'Med', status: 'Done', category: 'Growth', notes: '' },
+        { id: 'fri-2', text: 'Read for 30 minutes', completed: true, priority: 'Med', status: 'Done', category: 'Growth', notes: '', recurring: 'daily' },
         { id: 'fri-3', text: 'Q3 planning session', completed: false, priority: 'High', status: 'In Progress', category: 'Work', notes: 'Review OKRs with design and engineering leads' },
         { id: 'fri-4', text: '', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
         { id: 'fri-5', text: '', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
@@ -392,7 +497,7 @@ export function createInitialWeekColumns(): DayColumn[] {
       dayName: 'Sunday',
       dateLabel: 'Jun 14',
       tasks: [
-        { id: 'sun-1', text: 'Meal prep for the week', completed: false, priority: 'Med', status: 'To Do', category: 'Health', notes: '' },
+        { id: 'sun-1', text: 'Meal prep for the week', completed: false, priority: 'Med', status: 'To Do', category: 'Health', notes: '', recurring: 'weekly' },
         { id: 'sun-2', text: 'Water indoor plants', completed: true, priority: 'Low', status: 'Done', category: 'Home', notes: '' },
         { id: 'sun-3', text: 'Read new design book', completed: false, priority: 'Low', status: 'To Do', category: 'Growth', notes: '' },
         { id: 'sun-4', text: '', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
@@ -478,21 +583,128 @@ export function syncDetailedTaskToggle(
   return { nextDetailedTasks, nextColumns };
 }
 
+export function regenerateRecurringTask(
+  columns: DayColumn[],
+  dayId: string,
+  completedTask: DailyTask
+): {
+  nextColumns: DayColumn[];
+  regeneratedTask: DailyTask | null;
+  targetDayId: string;
+  targetDayName: string;
+} {
+  const recurring = completedTask.recurring;
+  if (!recurring || recurring === 'none' || !completedTask.text.trim()) {
+    return {
+      nextColumns: columns,
+      regeneratedTask: null,
+      targetDayId: dayId,
+      targetDayName: '',
+    };
+  }
+
+  const currentColIndex = columns.findIndex((c) => c.id === dayId);
+  if (currentColIndex === -1) {
+    return {
+      nextColumns: columns,
+      regeneratedTask: null,
+      targetDayId: dayId,
+      targetDayName: '',
+    };
+  }
+
+  // Calculate target day column
+  // Daily: advances to the next day column (e.g. Thu -> Fri, Sun -> Mon)
+  // Weekly: same day column for next week cycle
+  // Monthly: same day column for next month cycle
+  let targetColIndex = currentColIndex;
+  if (recurring === 'daily') {
+    targetColIndex = (currentColIndex + 1) % columns.length;
+  }
+
+  const targetCol = columns[targetColIndex];
+  if (!targetCol) {
+    return {
+      nextColumns: columns,
+      regeneratedTask: null,
+      targetDayId: dayId,
+      targetDayName: '',
+    };
+  }
+
+  let regeneratedTask: DailyTask | null = null;
+  const targetBlankIndex = targetCol.tasks.findIndex(
+    (t) => t.text.trim().length === 0 || t.text.trim() === '—'
+  );
+
+  const nextColumns = columns.map((col, idx) => {
+    if (idx !== targetColIndex) return col;
+
+    if (targetBlankIndex !== -1) {
+      const nextTasks = col.tasks.map((task, taskIdx) => {
+        if (taskIdx !== targetBlankIndex) return task;
+        const freshTask: DailyTask = {
+          ...task,
+          text: completedTask.text,
+          completed: false,
+          status: 'To Do',
+          priority: completedTask.priority,
+          category: completedTask.category,
+          notes: completedTask.notes || '',
+          recurring: completedTask.recurring,
+        };
+        regeneratedTask = freshTask;
+        return freshTask;
+      });
+      return { ...col, tasks: nextTasks };
+    }
+
+    // Append to target column if no blank slot exists
+    const newId = `${col.id}-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const freshTask: DailyTask = {
+      id: newId,
+      text: completedTask.text,
+      completed: false,
+      status: 'To Do',
+      priority: completedTask.priority,
+      category: completedTask.category,
+      notes: completedTask.notes || '',
+      recurring: completedTask.recurring,
+    };
+    regeneratedTask = freshTask;
+    return { ...col, tasks: [...col.tasks, freshTask] };
+  });
+
+  return {
+    nextColumns,
+    regeneratedTask,
+    targetDayId: targetCol.id,
+    targetDayName: targetCol.dayName,
+  };
+}
+
 export function syncDailyTaskToggle(
   columns: DayColumn[],
   detailedTasks: DetailedTask[],
   dayId: string,
   targetDailyTaskId: string
-): { nextColumns: DayColumn[]; nextDetailedTasks: DetailedTask[] } {
+): {
+  nextColumns: DayColumn[];
+  nextDetailedTasks: DetailedTask[];
+  regeneratedTask: DailyTask | null;
+  regeneratedTargetDayName?: string;
+} {
   let nextCompleted = false;
   let nextStatus: TaskStatus = 'Done';
+  let targetTaskBefore: DailyTask | undefined;
 
-  const nextColumns = columns.map((col) => {
+  let nextColumns = columns.map((col) => {
     if (col.id !== dayId) return col;
     return {
       ...col,
       tasks: col.tasks.map((task) => {
         if (task.id !== targetDailyTaskId) return task;
+        targetTaskBefore = task;
         const toggled = toggleTaskCompletion(task);
         nextCompleted = toggled.completed;
         nextStatus = toggled.status;
@@ -500,6 +712,25 @@ export function syncDailyTaskToggle(
       }),
     };
   });
+
+  let regeneratedTask: DailyTask | null = null;
+  let regeneratedTargetDayName: string | undefined;
+
+  // If task was completed and has an active recurrence cadence, auto-regenerate it
+  if (
+    nextCompleted &&
+    targetTaskBefore?.recurring &&
+    targetTaskBefore.recurring !== 'none'
+  ) {
+    const regen = regenerateRecurringTask(
+      nextColumns,
+      dayId,
+      targetTaskBefore
+    );
+    nextColumns = regen.nextColumns;
+    regeneratedTask = regen.regeneratedTask;
+    regeneratedTargetDayName = regen.targetDayName;
+  }
 
   const link = DETAILED_DAILY_TASK_LINKS.find(
     (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
@@ -517,7 +748,12 @@ export function syncDailyTaskToggle(
     });
   }
 
-  return { nextColumns, nextDetailedTasks };
+  return {
+    nextColumns,
+    nextDetailedTasks,
+    regeneratedTask,
+    regeneratedTargetDayName,
+  };
 }
 
 export function syncDetailedTaskStatus(
@@ -631,13 +867,17 @@ export function syncDetailedTaskText(
 export function syncDetailedTaskCategory(
   detailedTasks: DetailedTask[],
   columns: DayColumn[],
-  targetDetailedTaskId: string
+  targetDetailedTaskId: string,
+  explicitCategory?: TaskCategory
 ): { nextDetailedTasks: DetailedTask[]; nextColumns: DayColumn[] } {
   let updatedCategory: TaskCategory = 'Work';
 
   const nextDetailedTasks = detailedTasks.map((t) => {
     if (t.id !== targetDetailedTaskId) return t;
-    const nextCat = cycleCategory(t.category);
+    const nextCat =
+      explicitCategory && isValidCategory(explicitCategory)
+        ? explicitCategory
+        : cycleCategory(t.category);
     updatedCategory = nextCat;
     return { ...t, category: nextCat };
   });
@@ -703,7 +943,8 @@ export function syncDailyTaskCategory(
   columns: DayColumn[],
   detailedTasks: DetailedTask[],
   dayId: string,
-  targetDailyTaskId: string
+  targetDailyTaskId: string,
+  explicitCategory?: TaskCategory
 ): { nextColumns: DayColumn[]; nextDetailedTasks: DetailedTask[] } {
   let updatedCategory: TaskCategory = 'Work';
 
@@ -713,7 +954,10 @@ export function syncDailyTaskCategory(
       ...col,
       tasks: col.tasks.map((task) => {
         if (task.id !== targetDailyTaskId) return task;
-        const nextCat = cycleCategory(task.category);
+        const nextCat =
+          explicitCategory && isValidCategory(explicitCategory)
+            ? explicitCategory
+            : cycleCategory(task.category);
         updatedCategory = nextCat;
         return { ...task, category: nextCat };
       }),
@@ -768,6 +1012,256 @@ export function syncDailyTaskText(
   }
 
   return { nextColumns, nextDetailedTasks };
+}
+
+export function syncDailyTaskRecurring(
+  columns: DayColumn[],
+  detailedTasks: DetailedTask[],
+  dayId: string,
+  targetDailyTaskId: string,
+  explicitInterval?: RecurringInterval
+): { nextColumns: DayColumn[]; nextDetailedTasks: DetailedTask[] } {
+  let updatedRecurring: RecurringInterval = 'none';
+
+  const nextColumns = columns.map((col) => {
+    if (col.id !== dayId) return col;
+    return {
+      ...col,
+      tasks: col.tasks.map((task) => {
+        if (task.id !== targetDailyTaskId) return task;
+        const nextR =
+          explicitInterval !== undefined
+            ? explicitInterval
+            : cycleRecurringInterval(task.recurring);
+        updatedRecurring = nextR;
+        return { ...task, recurring: nextR };
+      }),
+    };
+  });
+
+  const link = DETAILED_DAILY_TASK_LINKS.find(
+    (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
+  );
+
+  let nextDetailedTasks = detailedTasks;
+  if (link) {
+    nextDetailedTasks = detailedTasks.map((task) => {
+      if (task.id !== link.detailedTaskId) return task;
+      return { ...task, recurring: updatedRecurring };
+    });
+  }
+
+  return { nextColumns, nextDetailedTasks };
+}
+
+export function updateDailyTaskRecurring(
+  columns: DayColumn[],
+  dayId: string,
+  taskId: string,
+  recurring: RecurringInterval
+): DayColumn[] {
+  return columns.map((col) =>
+    col.id !== dayId
+      ? col
+      : {
+          ...col,
+          tasks: col.tasks.map((task) =>
+            task.id === taskId ? { ...task, recurring } : task
+          ),
+        }
+  );
+}
+
+export interface QuickAddTaskOptions {
+  priority?: Priority;
+  category?: TaskCategory;
+  recurring?: RecurringInterval;
+  idGenerator?: (dayId: string, nextIndex: number) => string;
+}
+
+export function parseQuickTaskTag(
+  rawText: string,
+  fallbackCategory?: TaskCategory,
+  fallbackRecurring?: RecurringInterval
+): {
+  cleanText: string;
+  category: TaskCategory | undefined;
+  recurring: RecurringInterval | undefined;
+  hadInlineTag: boolean;
+} {
+  const sanitized = sanitizeTaskText(rawText).trim();
+  if (!sanitized) {
+    return {
+      cleanText: '',
+      category: fallbackCategory,
+      recurring: fallbackRecurring ?? 'none',
+      hadInlineTag: false,
+    };
+  }
+
+  let detectedCategory: TaskCategory | undefined;
+  let detectedRecurring: RecurringInterval | undefined;
+
+  let stripped = sanitized.replace(
+    /(?:^|\s)(?:#|@|repeat:)(daily|weekly|monthly)\b/gi,
+    (_match, intervalWord: string) => {
+      const lower = intervalWord.toLowerCase();
+      if (lower === 'daily' || lower === 'weekly' || lower === 'monthly') {
+        detectedRecurring = lower;
+      }
+      return ' ';
+    }
+  );
+
+  stripped = stripped
+    .replace(
+      /(?:^|\s)#(work|personal|health|finance|home|growth)\b/gi,
+      (_match, tagWord: string) => {
+        const normalized =
+          tagWord.charAt(0).toUpperCase() + tagWord.slice(1).toLowerCase();
+        if (isValidCategory(normalized)) {
+          detectedCategory = normalized;
+        }
+        return ' ';
+      }
+    )
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const hadInlineTag = Boolean(detectedCategory || detectedRecurring);
+
+  return {
+    cleanText: stripped.length > 0 ? stripped : sanitized,
+    category: detectedCategory ?? fallbackCategory,
+    recurring: detectedRecurring ?? fallbackRecurring ?? 'none',
+    hadInlineTag,
+  };
+}
+
+export function addQuickTaskToDayColumn(
+  columns: DayColumn[],
+  detailedTasks: DetailedTask[],
+  dayId: string,
+  rawText: string,
+  options?: QuickAddTaskOptions
+): {
+  nextColumns: DayColumn[];
+  nextDetailedTasks: DetailedTask[];
+  addedTask: DailyTask | null;
+} {
+  const parsedTag = parseQuickTaskTag(
+    rawText,
+    options?.category,
+    options?.recurring
+  );
+  const cleanText = parsedTag.cleanText;
+  if (!cleanText || cleanText === '—') {
+    return {
+      nextColumns: columns,
+      nextDetailedTasks: detailedTasks,
+      addedTask: null,
+    };
+  }
+
+  const targetCol = columns.find((col) => col.id === dayId);
+  if (!targetCol) {
+    return {
+      nextColumns: columns,
+      nextDetailedTasks: detailedTasks,
+      addedTask: null,
+    };
+  }
+
+  const firstBlankIndex = targetCol.tasks.findIndex(
+    (t) => t.text.trim().length === 0 || t.text.trim() === '—'
+  );
+
+  const resolvedRecurring =
+    parsedTag.recurring ?? options?.recurring ?? 'none';
+
+  let addedTask: DailyTask | null = null;
+  let updatedDailyTaskId: string | null = null;
+
+  const nextColumns = columns.map((col) => {
+    if (col.id !== dayId) return col;
+
+    if (firstBlankIndex !== -1) {
+      const nextTasks = col.tasks.map((task, idx) => {
+        if (idx !== firstBlankIndex) return task;
+        const populatedTask: DailyTask = {
+          ...task,
+          text: cleanText,
+          completed: false,
+          status: 'To Do',
+          priority: options?.priority ?? 'Med',
+          category: parsedTag.category ?? (task.category || 'Work'),
+          notes: '',
+          recurring: resolvedRecurring,
+        };
+        addedTask = populatedTask;
+        updatedDailyTaskId = populatedTask.id;
+        return populatedTask;
+      });
+      return {
+        ...col,
+        tasks: nextTasks,
+      };
+    }
+
+    const nextIndex = col.tasks.length + 1;
+    const existingIds = new Set(col.tasks.map((t) => t.id));
+    let newTaskId = options?.idGenerator
+      ? options.idGenerator(col.id, nextIndex)
+      : `${col.id}-${nextIndex}`;
+    if (existingIds.has(newTaskId)) {
+      newTaskId = `${col.id}-${nextIndex}-${Date.now()}`;
+    }
+
+    const appendedTask: DailyTask = {
+      id: newTaskId,
+      text: cleanText,
+      completed: false,
+      status: 'To Do',
+      priority: options?.priority ?? 'Med',
+      category: parsedTag.category ?? 'Work',
+      notes: '',
+      recurring: resolvedRecurring,
+    };
+    addedTask = appendedTask;
+    updatedDailyTaskId = appendedTask.id;
+
+    return {
+      ...col,
+      tasks: [...col.tasks, appendedTask],
+    };
+  });
+
+  let nextDetailedTasks = detailedTasks;
+  if (updatedDailyTaskId) {
+    const link = DETAILED_DAILY_TASK_LINKS.find(
+      (l) => l.dayId === dayId && l.dailyTaskId === updatedDailyTaskId
+    );
+    if (link) {
+      nextDetailedTasks = detailedTasks.map((dt) =>
+        dt.id === link.detailedTaskId
+          ? {
+              ...dt,
+              text: cleanText,
+              completed: false,
+              status: 'To Do',
+              priority: addedTask?.priority ?? dt.priority,
+              category: addedTask?.category ?? dt.category,
+            }
+          : dt
+      );
+    }
+  }
+
+  return {
+    nextColumns,
+    nextDetailedTasks,
+    addedTask,
+  };
 }
 
 
@@ -951,6 +1445,484 @@ export function clearDetailedTasksByCompletion(
   });
 }
 
+function compactSingleDayColumn(
+  col: DayColumn,
+  predicateKeep: (task: DailyTask) => boolean
+): DayColumn {
+  const keptTasks = col.tasks.filter((task) => {
+    const hasText = task.text.trim().length > 0 && task.text.trim() !== '—';
+    return hasText && predicateKeep(task);
+  });
+  const nextTasks: DailyTask[] = col.tasks.map((originalTask, idx) => {
+    const kept = keptTasks[idx];
+    if (kept) {
+      return {
+        ...kept,
+        id: originalTask.id,
+        notes: kept.notes ?? '',
+      };
+    }
+    return {
+      id: originalTask.id,
+      text: '',
+      completed: false,
+      priority: 'Med',
+      status: 'To Do',
+      category: 'Personal',
+      notes: '',
+    };
+  });
+  return {
+    ...col,
+    tasks: nextTasks,
+  };
+}
+
+export function archiveCompletedTasks(
+  columns: DayColumn[],
+  detailedTasks: DetailedTask[],
+  existingArchive: ArchivedTask[],
+  timestampIso?: string
+): {
+  nextColumns: DayColumn[];
+  nextDetailedTasks: DetailedTask[];
+  nextArchive: ArchivedTask[];
+  archivedCount: number;
+} {
+  const nowIso = timestampIso || new Date().toISOString();
+  const newlyArchived: ArchivedTask[] = [];
+  const capturedDetailedIds = new Set<string>();
+  let seq = 0;
+
+  for (const col of columns) {
+    for (const task of col.tasks) {
+      const cleanText = task.text.trim();
+      if (!task.completed || !cleanText || cleanText === '—') continue;
+
+      const link = DETAILED_DAILY_TASK_LINKS.find(
+        (l) => l.dayId === col.id && l.dailyTaskId === task.id
+      );
+      const linkedDt = link
+        ? detailedTasks.find((dt) => dt.id === link.detailedTaskId)
+        : undefined;
+
+      if (linkedDt && linkedDt.completed) {
+        capturedDetailedIds.add(linkedDt.id);
+      }
+
+      newlyArchived.push({
+        archiveId: `arch-${task.id}-${Date.now()}-${++seq}`,
+        originalTaskId: task.id,
+        text: cleanText,
+        priority: task.priority,
+        category: task.category || 'Work',
+        notes: task.notes || '',
+        sourceType: 'daily',
+        sourceDayId: col.id,
+        sourceLabel: `${col.dayName} (${col.dateLabel})`,
+        linkedDetailedTaskId: link?.detailedTaskId,
+        linkedDetailedText:
+          linkedDt && linkedDt.text.trim().length > 0
+            ? linkedDt.text.trim()
+            : undefined,
+        archivedAt: nowIso,
+      });
+    }
+  }
+
+  for (const dt of detailedTasks) {
+    const cleanText = dt.text.trim();
+    if (!dt.completed || !cleanText || cleanText === '—') continue;
+    if (capturedDetailedIds.has(dt.id)) continue;
+
+    const link = DETAILED_DAILY_TASK_LINKS.find(
+      (l) => l.detailedTaskId === dt.id
+    );
+    const linkedCol = link
+      ? columns.find((c) => c.id === link.dayId)
+      : undefined;
+
+    newlyArchived.push({
+      archiveId: `arch-${dt.id}-${Date.now()}-${++seq}`,
+      originalTaskId: dt.id,
+      text: cleanText,
+      priority: dt.priority,
+      category: dt.category || 'Work',
+      notes: '',
+      sourceType: 'detailed',
+      sourceDayId: link?.dayId,
+      sourceLabel: linkedCol
+        ? `${linkedCol.dayName} (${linkedCol.dateLabel})`
+        : 'Live Breakdown',
+      linkedDetailedTaskId: dt.id,
+      linkedDetailedText: cleanText,
+      archivedAt: nowIso,
+    });
+  }
+
+  if (newlyArchived.length === 0) {
+    return {
+      nextColumns: columns,
+      nextDetailedTasks: detailedTasks,
+      nextArchive: existingArchive,
+      archivedCount: 0,
+    };
+  }
+
+  const nextColumns = clearCompletedWeekTasks(columns);
+  const nextDetailedTasks = detailedTasks.map((dt) => {
+    if (dt.completed || capturedDetailedIds.has(dt.id)) {
+      return {
+        ...dt,
+        text: '',
+        completed: false,
+        status: 'To Do' as TaskStatus,
+      };
+    }
+    return dt;
+  });
+
+  return {
+    nextColumns,
+    nextDetailedTasks,
+    nextArchive: [...newlyArchived, ...existingArchive],
+    archivedCount: newlyArchived.length,
+  };
+}
+
+export function archiveSingleDailyTask(
+  columns: DayColumn[],
+  detailedTasks: DetailedTask[],
+  existingArchive: ArchivedTask[],
+  dayId: string,
+  taskId: string,
+  timestampIso?: string
+): {
+  nextColumns: DayColumn[];
+  nextDetailedTasks: DetailedTask[];
+  nextArchive: ArchivedTask[];
+  archivedItem: ArchivedTask | null;
+} {
+  const col = columns.find((c) => c.id === dayId);
+  const targetTask = col?.tasks.find((t) => t.id === taskId);
+  if (
+    !col ||
+    !targetTask ||
+    !targetTask.text.trim() ||
+    targetTask.text.trim() === '—'
+  ) {
+    return {
+      nextColumns: columns,
+      nextDetailedTasks: detailedTasks,
+      nextArchive: existingArchive,
+      archivedItem: null,
+    };
+  }
+
+  const nowIso = timestampIso || new Date().toISOString();
+  const link = DETAILED_DAILY_TASK_LINKS.find(
+    (l) => l.dayId === dayId && l.dailyTaskId === taskId
+  );
+  const linkedDt = link
+    ? detailedTasks.find((dt) => dt.id === link.detailedTaskId)
+    : undefined;
+
+  const archivedItem: ArchivedTask = {
+    archiveId: `arch-${targetTask.id}-${Date.now()}`,
+    originalTaskId: targetTask.id,
+    text: targetTask.text.trim(),
+    priority: targetTask.priority,
+    category: targetTask.category || 'Work',
+    notes: targetTask.notes || '',
+    sourceType: 'daily',
+    sourceDayId: col.id,
+    sourceLabel: `${col.dayName} (${col.dateLabel})`,
+    linkedDetailedTaskId: link?.detailedTaskId,
+    linkedDetailedText:
+      linkedDt && linkedDt.text.trim().length > 0
+        ? linkedDt.text.trim()
+        : undefined,
+    archivedAt: nowIso,
+  };
+
+  const nextColumns = columns.map((c) =>
+    c.id === dayId ? compactSingleDayColumn(c, (t) => t.id !== taskId) : c
+  );
+
+  const nextDetailedTasks = link
+    ? detailedTasks.map((dt) =>
+        dt.id === link.detailedTaskId
+          ? {
+              ...dt,
+              text: '',
+              completed: false,
+              status: 'To Do' as TaskStatus,
+            }
+          : dt
+      )
+    : detailedTasks;
+
+  return {
+    nextColumns,
+    nextDetailedTasks,
+    nextArchive: [archivedItem, ...existingArchive],
+    archivedItem,
+  };
+}
+
+export function archiveSingleDetailedTask(
+  detailedTasks: DetailedTask[],
+  columns: DayColumn[],
+  existingArchive: ArchivedTask[],
+  detailedTaskId: string,
+  timestampIso?: string
+): {
+  nextColumns: DayColumn[];
+  nextDetailedTasks: DetailedTask[];
+  nextArchive: ArchivedTask[];
+  archivedItem: ArchivedTask | null;
+} {
+  const targetDt = detailedTasks.find((dt) => dt.id === detailedTaskId);
+  if (!targetDt || !targetDt.text.trim() || targetDt.text.trim() === '—') {
+    return {
+      nextColumns: columns,
+      nextDetailedTasks: detailedTasks,
+      nextArchive: existingArchive,
+      archivedItem: null,
+    };
+  }
+
+  const nowIso = timestampIso || new Date().toISOString();
+  const link = DETAILED_DAILY_TASK_LINKS.find(
+    (l) => l.detailedTaskId === detailedTaskId
+  );
+  const linkedCol = link ? columns.find((c) => c.id === link.dayId) : undefined;
+  const linkedDailyTask =
+    link && linkedCol
+      ? linkedCol.tasks.find((t) => t.id === link.dailyTaskId)
+      : undefined;
+
+  const archivedItem: ArchivedTask = {
+    archiveId: `arch-${targetDt.id}-${Date.now()}`,
+    originalTaskId: linkedDailyTask?.id || targetDt.id,
+    text:
+      linkedDailyTask && linkedDailyTask.text.trim().length > 0
+        ? linkedDailyTask.text.trim()
+        : targetDt.text.trim(),
+    priority: targetDt.priority,
+    category: targetDt.category || 'Work',
+    notes: linkedDailyTask?.notes || '',
+    sourceType: linkedCol ? 'daily' : 'detailed',
+    sourceDayId: linkedCol?.id,
+    sourceLabel: linkedCol
+      ? `${linkedCol.dayName} (${linkedCol.dateLabel})`
+      : 'Live Breakdown',
+    linkedDetailedTaskId: targetDt.id,
+    linkedDetailedText: targetDt.text.trim(),
+    archivedAt: nowIso,
+  };
+
+  const nextDetailedTasks = detailedTasks.map((dt) =>
+    dt.id === detailedTaskId
+      ? {
+          ...dt,
+          text: '',
+          completed: false,
+          status: 'To Do' as TaskStatus,
+        }
+      : dt
+  );
+
+  const nextColumns =
+    link && linkedCol
+      ? columns.map((c) =>
+          c.id === link.dayId
+            ? compactSingleDayColumn(c, (t) => t.id !== link.dailyTaskId)
+            : c
+        )
+      : columns;
+
+  return {
+    nextColumns,
+    nextDetailedTasks,
+    nextArchive: [archivedItem, ...existingArchive],
+    archivedItem,
+  };
+}
+
+export function restoreArchivedTask(
+  columns: DayColumn[],
+  detailedTasks: DetailedTask[],
+  existingArchive: ArchivedTask[],
+  archiveId: string
+): {
+  nextColumns: DayColumn[];
+  nextDetailedTasks: DetailedTask[];
+  nextArchive: ArchivedTask[];
+  restoredItem: ArchivedTask | null;
+} {
+  const item = existingArchive.find((a) => a.archiveId === archiveId);
+  if (!item) {
+    return {
+      nextColumns: columns,
+      nextDetailedTasks: detailedTasks,
+      nextArchive: existingArchive,
+      restoredItem: null,
+    };
+  }
+
+  const nextArchive = existingArchive.filter((a) => a.archiveId !== archiveId);
+  let nextColumns = columns;
+  let nextDetailedTasks = detailedTasks;
+
+  const targetDayId =
+    item.sourceDayId || (item.sourceType === 'daily' ? 'mon' : undefined);
+
+  if (targetDayId) {
+    nextColumns = columns.map((col) => {
+      if (col.id !== targetDayId) return col;
+      const tasksCopy = [...col.tasks];
+      const blankIdx = tasksCopy.findIndex((t) => t.text.trim().length === 0);
+      if (blankIdx !== -1) {
+        tasksCopy[blankIdx] = {
+          ...tasksCopy[blankIdx],
+          text: item.text,
+          completed: true,
+          status: 'Done',
+          priority: item.priority,
+          category: item.category,
+          notes: item.notes || '',
+        };
+      } else {
+        tasksCopy.push({
+          id: `${col.id}-restored-${Date.now()}`,
+          text: item.text,
+          completed: true,
+          status: 'Done',
+          priority: item.priority,
+          category: item.category,
+          notes: item.notes || '',
+        });
+      }
+      return {
+        ...col,
+        tasks: tasksCopy,
+      };
+    });
+  }
+
+  if (item.linkedDetailedTaskId || item.sourceType === 'detailed') {
+    const targetDtId = item.linkedDetailedTaskId || item.originalTaskId;
+    const restoredDtText = item.linkedDetailedText || item.text;
+    let restoredInDetailed = false;
+
+    nextDetailedTasks = detailedTasks.map((dt) => {
+      if (dt.id === targetDtId && !restoredInDetailed) {
+        restoredInDetailed = true;
+        return {
+          ...dt,
+          text: restoredDtText,
+          completed: true,
+          status: 'Done',
+          priority: item.priority,
+          category: item.category,
+        };
+      }
+      return dt;
+    });
+
+    if (!restoredInDetailed) {
+      const firstEmptyIdx = nextDetailedTasks.findIndex(
+        (dt) => dt.text.trim().length === 0
+      );
+      if (firstEmptyIdx !== -1) {
+        nextDetailedTasks = nextDetailedTasks.map((dt, idx) =>
+          idx === firstEmptyIdx
+            ? {
+                ...dt,
+                text: restoredDtText,
+                completed: true,
+                status: 'Done',
+                priority: item.priority,
+                category: item.category,
+              }
+            : dt
+        );
+      }
+    }
+  }
+
+  return {
+    nextColumns,
+    nextDetailedTasks,
+    nextArchive,
+    restoredItem: item,
+  };
+}
+
+export function restoreAllArchivedTasks(
+  columns: DayColumn[],
+  detailedTasks: DetailedTask[],
+  existingArchive: ArchivedTask[]
+): {
+  nextColumns: DayColumn[];
+  nextDetailedTasks: DetailedTask[];
+  nextArchive: ArchivedTask[];
+} {
+  let currentCols = columns;
+  let currentDetailed = detailedTasks;
+  let currentArchive = [...existingArchive];
+
+  // Restore in reverse chronological order so earliest archived slots fill first
+  const reversed = [...existingArchive].reverse();
+  for (const item of reversed) {
+    const res = restoreArchivedTask(
+      currentCols,
+      currentDetailed,
+      currentArchive,
+      item.archiveId
+    );
+    currentCols = res.nextColumns;
+    currentDetailed = res.nextDetailedTasks;
+    currentArchive = res.nextArchive;
+  }
+
+  return {
+    nextColumns: currentCols,
+    nextDetailedTasks: currentDetailed,
+    nextArchive: [],
+  };
+}
+
+export function filterArchivedTasks(
+  archivedTasks: ArchivedTask[],
+  query: string
+): ArchivedTask[] {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return archivedTasks;
+  return archivedTasks.filter((item) => {
+    const textMatch = item.text.toLowerCase().includes(normalized);
+    const detailedMatch = Boolean(
+      item.linkedDetailedText &&
+        item.linkedDetailedText.toLowerCase().includes(normalized)
+    );
+    const notesMatch = Boolean(
+      item.notes && item.notes.toLowerCase().includes(normalized)
+    );
+    const catMatch = item.category.toLowerCase().includes(normalized);
+    const prioMatch = item.priority.toLowerCase().includes(normalized);
+    const sourceMatch = item.sourceLabel.toLowerCase().includes(normalized);
+    return (
+      textMatch ||
+      detailedMatch ||
+      notesMatch ||
+      catMatch ||
+      prioMatch ||
+      sourceMatch
+    );
+  });
+}
+
 export function matchesSearchKeyword(
   task: {
     text: string;
@@ -997,6 +1969,48 @@ export function filterDetailedTasksByKeyword(
   const normalized = query.trim();
   if (!normalized) return tasks;
   return tasks.filter((task) => matchesSearchKeyword(task, normalized));
+}
+
+export function filterTasksByCategory<
+  T extends { text: string; category: TaskCategory }
+>(tasks: T[], category: TaskCategory | 'All'): T[] {
+  if (category === 'All') return tasks;
+  return tasks.filter(
+    (t) =>
+      t.text.trim().length > 0 &&
+      t.text.trim() !== '—' &&
+      t.category === category
+  );
+}
+
+export function filterDayColumnsByCategory(
+  columns: DayColumn[],
+  category: TaskCategory | 'All'
+): DayColumn[] {
+  if (category === 'All') return columns;
+  return columns.map((col) => ({
+    ...col,
+    tasks: filterTasksByCategory(col.tasks, category),
+  }));
+}
+
+export function countTasksByCategory(
+  tasks: Array<{ text: string; category: TaskCategory }>
+): Record<TaskCategory, number> {
+  const counts: Record<TaskCategory, number> = {
+    Work: 0,
+    Personal: 0,
+    Health: 0,
+    Finance: 0,
+    Home: 0,
+    Growth: 0,
+  };
+  for (const t of tasks) {
+    if (t.text.trim().length === 0 || t.text.trim() === '—') continue;
+    const cat = isValidCategory(t.category) ? t.category : 'Work';
+    counts[cat] = (counts[cat] || 0) + 1;
+  }
+  return counts;
 }
 
 export function countMatchingTasks(
@@ -1250,6 +2264,25 @@ export function getAdjacentRoutes(currentPath: PagePath): {
     next: safeIdx < PAGE_ROUTES.length - 1 ? PAGE_ROUTES[safeIdx + 1] : null,
     current: PAGE_ROUTES[safeIdx],
   };
+}
+
+export function formatTopBarViewContext(
+  currentPath: PagePath,
+  activeView: ViewMode,
+  isNotFoundRoute = false
+): string {
+  if (isNotFoundRoute) {
+    return '404 · Page Not Found';
+  }
+  const matchedRoute =
+    PAGE_ROUTES.find((r) => r.path === currentPath) || PAGE_ROUTES[0];
+  const viewModeLabel =
+    activeView === 'month'
+      ? 'This Month'
+      : activeView === 'year'
+      ? 'This Year'
+      : 'This Week';
+  return `${matchedRoute.label} · ${viewModeLabel}`;
 }
 
 export function findTaskLocation(
@@ -1512,12 +2545,16 @@ export function generateCsvExport(columns: DayColumn[]): string {
       const task = col.tasks[r];
       if (!task || !task.text.trim()) return '""';
       const statusMark = task.completed ? '[DONE] ' : `[${task.status}] `;
+      const recurringSuffix =
+        task.recurring && task.recurring !== 'none'
+          ? ` [Repeat: ${task.recurring}]`
+          : '';
       const noteSuffix =
         task.notes && task.notes.trim().length > 0
           ? ` — Notes: ${task.notes.trim()}`
           : '';
       return sanitizeCsvCell(
-        `${statusMark}${task.text.trim()} (${task.priority})${noteSuffix}`
+        `${statusMark}${task.text.trim()} (${task.priority})${recurringSuffix}${noteSuffix}`
       );
     });
     rows.push(rowCells.join(','));
@@ -1613,11 +2650,21 @@ export function isValidCategory(val: unknown): val is TaskCategory {
   );
 }
 
+export function isValidRecurring(val: unknown): val is RecurringInterval {
+  return (
+    val === 'none' ||
+    val === 'daily' ||
+    val === 'weekly' ||
+    val === 'monthly'
+  );
+}
+
 export function parsePersistedDashboardState(rawJson: string | null): {
   columns: DayColumn[];
   detailedTasks: DetailedTask[];
   monthlyGoals: DetailedTask[];
   yearlyGoals: DetailedTask[];
+  archivedTasks: ArchivedTask[];
   activeTheme: ThemeId;
 } {
   const defaultColumns = createInitialWeekColumns();
@@ -1632,6 +2679,7 @@ export function parsePersistedDashboardState(rawJson: string | null): {
       detailedTasks: defaultDetailed,
       monthlyGoals: defaultMonthly,
       yearlyGoals: defaultYearly,
+      archivedTasks: [],
       activeTheme: defaultTheme,
     };
   }
@@ -1666,7 +2714,7 @@ export function parsePersistedDashboardState(rawJson: string | null): {
                 typeof col?.isToday === 'boolean'
                   ? col.isToday
                   : fallbackCol.isToday,
-              tasks: rawTasks.slice(0, 12).map((task: any, taskIdx: number) => {
+              tasks: rawTasks.slice(0, 30).map((task: any, taskIdx: number) => {
                 const fallbackTask = fallbackCol.tasks[taskIdx];
                 const completed = Boolean(task?.completed);
                 const status: TaskStatus = isValidStatus(task?.status)
@@ -1695,6 +2743,9 @@ export function parsePersistedDashboardState(rawJson: string | null): {
                     typeof task?.notes === 'string'
                       ? sanitizeTaskNotes(task.notes)
                       : fallbackTask?.notes ?? '',
+                  recurring: isValidRecurring(task?.recurring)
+                    ? task.recurring
+                    : fallbackTask?.recurring ?? 'none',
                 };
               }),
             };
@@ -1731,6 +2782,9 @@ export function parsePersistedDashboardState(rawJson: string | null): {
           category: isValidCategory(item?.category)
             ? item.category
             : fb?.category ?? 'Work',
+          recurring: isValidRecurring(item?.recurring)
+            ? item.recurring
+            : fb?.recurring ?? 'none',
         };
       });
     };
@@ -1741,6 +2795,60 @@ export function parsePersistedDashboardState(rawJson: string | null): {
         ? (parsed.activeTheme as ThemeId)
         : defaultTheme;
 
+    const archivedTasks: ArchivedTask[] = Array.isArray(parsed.archivedTasks)
+      ? parsed.archivedTasks
+          .slice(0, 200)
+          .filter(
+            (item: any) =>
+              item &&
+              typeof item === 'object' &&
+              typeof item.text === 'string' &&
+              item.text.trim().length > 0
+          )
+          .map((item: any, idx: number) => ({
+            archiveId:
+              typeof item.archiveId === 'string' && item.archiveId.trim()
+                ? item.archiveId
+                : `arch-persisted-${idx + 1}`,
+            originalTaskId:
+              typeof item.originalTaskId === 'string' &&
+              item.originalTaskId.trim()
+                ? item.originalTaskId
+                : `orig-${idx + 1}`,
+            text: sanitizeTaskText(item.text),
+            priority: isValidPriority(item.priority) ? item.priority : 'Med',
+            category: isValidCategory(item.category) ? item.category : 'Work',
+            notes:
+              typeof item.notes === 'string'
+                ? sanitizeTaskNotes(item.notes)
+                : '',
+            recurring: isValidRecurring(item.recurring)
+              ? item.recurring
+              : 'none',
+            sourceType: item.sourceType === 'detailed' ? 'detailed' : 'daily',
+            sourceDayId:
+              typeof item.sourceDayId === 'string'
+                ? item.sourceDayId
+                : undefined,
+            sourceLabel:
+              typeof item.sourceLabel === 'string' && item.sourceLabel.trim()
+                ? sanitizeTaskText(item.sourceLabel, 80)
+                : 'Daily List',
+            linkedDetailedTaskId:
+              typeof item.linkedDetailedTaskId === 'string'
+                ? item.linkedDetailedTaskId
+                : undefined,
+            linkedDetailedText:
+              typeof item.linkedDetailedText === 'string'
+                ? sanitizeTaskText(item.linkedDetailedText)
+                : undefined,
+            archivedAt:
+              typeof item.archivedAt === 'string' && item.archivedAt.trim()
+                ? item.archivedAt
+                : new Date().toISOString(),
+          }))
+      : [];
+
     return {
       columns,
       detailedTasks: sanitizeDetailedList(
@@ -1749,6 +2857,7 @@ export function parsePersistedDashboardState(rawJson: string | null): {
       ),
       monthlyGoals: sanitizeDetailedList(parsed.monthlyGoals, defaultMonthly),
       yearlyGoals: sanitizeDetailedList(parsed.yearlyGoals, defaultYearly),
+      archivedTasks,
       activeTheme,
     };
   } catch {
@@ -1757,6 +2866,7 @@ export function parsePersistedDashboardState(rawJson: string | null): {
       detailedTasks: defaultDetailed,
       monthlyGoals: defaultMonthly,
       yearlyGoals: defaultYearly,
+      archivedTasks: [],
       activeTheme: defaultTheme,
     };
   }
@@ -1785,8 +2895,11 @@ export type KeyboardShortcutAction =
   | 'UNDO'
   | 'REDO'
   | 'TOGGLE_SOUND'
+  | 'TOGGLE_DARK_MODE'
+  | 'TOGGLE_FULLSCREEN'
   | 'ESCAPE'
   | 'OPEN_SHORTCUTS_MODAL'
+  | 'OPEN_ARCHIVE_MODAL'
   | 'FOCUS_SEARCH'
   | 'VIEW_WEEK'
   | 'VIEW_MONTH'
@@ -1860,9 +2973,9 @@ export const KEYBOARD_SHORTCUTS: KeyboardShortcutItem[] = [
     action: 'ESCAPE',
     category: 'Navigation & Modals',
     keys: ['Esc'],
-    label: 'Close Modal / Blur Field',
+    label: 'Close Modal / Exit Fullscreen',
     description:
-      'Closes any open modal, dropdown, or expanded notes drawer, or clears/blurs the active input.',
+      'Exits Fullscreen Presentation Mode, closes any open modal, or clears/blurs the active input.',
   },
   {
     id: 'focus-search',
@@ -1907,6 +3020,33 @@ export const KEYBOARD_SHORTCUTS: KeyboardShortcutItem[] = [
     label: 'Cycle Color Theme',
     description:
       'Cycles through Terracotta, Candy Pastel, Lavender Mist, and Soft Neutral themes.',
+  },
+  {
+    id: 'toggle-dark-mode',
+    action: 'TOGGLE_DARK_MODE',
+    category: 'Views & Search',
+    keys: ['D'],
+    label: 'Toggle Dark / Light Mode',
+    description:
+      'Switches instantly between Light Mode and Dark Mode across the entire website.',
+  },
+  {
+    id: 'toggle-fullscreen-presentation',
+    action: 'TOGGLE_FULLSCREEN',
+    category: 'Views & Search',
+    keys: ['F'],
+    label: 'Fullscreen Presentation Mode',
+    description:
+      'Expands the website into distraction-free Fullscreen Presentation Mode (press Esc to exit).',
+  },
+  {
+    id: 'open-archive',
+    action: 'OPEN_ARCHIVE_MODAL',
+    category: 'Navigation & Modals',
+    keys: ['A'],
+    label: 'Open Task Archive',
+    description:
+      'Opens the Archive modal to view, filter, or restore completed tasks.',
   },
   {
     id: 'open-shortcuts',
@@ -2015,7 +3155,10 @@ export function resolveKeyboardShortcutAction(
       if (key === '2') return 'VIEW_MONTH';
       if (key === '3') return 'VIEW_YEAR';
       if (lowerKey === 't') return 'CYCLE_THEME';
+      if (lowerKey === 'd') return 'TOGGLE_DARK_MODE';
+      if (lowerKey === 'f') return 'TOGGLE_FULLSCREEN';
       if (lowerKey === 'm') return 'TOGGLE_SOUND';
+      if (lowerKey === 'a') return 'OPEN_ARCHIVE_MODAL';
     }
   }
 

@@ -3,6 +3,8 @@ import {
   DayColumn,
   DetailedTask,
   PagePath,
+  RecurringInterval,
+  TaskCategory,
   ThemeId,
   ViewMode,
 } from '../utils/todoLogic';
@@ -29,7 +31,19 @@ export interface SharedDashboardPageProps {
   ) => void;
   onCycleDailyPriority: (dayId: string, taskId: string) => void;
   onCycleDailyCategory: (dayId: string, taskId: string) => void;
+  onCycleDailyRecurring?: (dayId: string, taskId: string) => void;
+  onSetDailyRecurring?: (
+    dayId: string,
+    taskId: string,
+    interval: RecurringInterval
+  ) => void;
   onUpdateDailyTaskText: (dayId: string, taskId: string, text: string) => void;
+  onQuickAddDailyTask?: (
+    dayId: string,
+    text: string,
+    category?: TaskCategory,
+    recurring?: RecurringInterval
+  ) => void;
   onUpdateDailyTaskNotes: (dayId: string, taskId: string, notes: string) => void;
   onReorderOrMoveDailyTask: (activeTaskId: string, overId: string) => void;
   onResetWeek: () => void;
@@ -48,6 +62,11 @@ export interface SharedDashboardPageProps {
   onExportCsv: () => void;
   onOpenModal: (tab: 'download' | 'demo') => void;
   onOpenShortcutsModal?: () => void;
+  onOpenArchiveModal?: () => void;
+  archivedCount?: number;
+  onArchiveCompletedTasks?: () => void;
+  onArchiveSingleDailyTask?: (dayId: string, taskId: string) => void;
+  onArchiveSingleDetailedTask?: (taskId: string) => void;
   onQuickSave?: () => void;
   onNavigate: (path: PagePath) => void;
 }

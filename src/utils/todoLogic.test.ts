@@ -6,10 +6,12 @@ import {
   cycleCategory,
   TASK_CATEGORIES,
   CATEGORY_BADGE_STYLES,
+  THEMES,
   isValidCategory,
   toggleTaskCompletion,
   updateTaskStatus,
   calculateDayProgress,
+  DailyTask,
   calculateDashboardMetrics,
   createInitialWeekColumns,
   createInitialDetailedTasks,
@@ -26,6 +28,7 @@ import {
   PAGE_ROUTES,
   resolveRoutePath,
   getAdjacentRoutes,
+  formatTopBarViewContext,
   reorderOrMoveDailyTask,
   buildWeeklyProgressTrends,
   countWeekTasksByCompletion,
@@ -52,7 +55,22 @@ import {
   syncDailyTaskPriority,
   syncDailyTaskCategory,
   syncDailyTaskText,
+  addQuickTaskToDayColumn,
+  parseQuickTaskTag,
+  cycleRecurringInterval,
+  regenerateRecurringTask,
+  syncDailyTaskRecurring,
+  updateDailyTaskRecurring,
+  isValidRecurring,
+  RECURRING_CONFIG,
+  RECURRING_INTERVALS,
   DETAILED_DAILY_TASK_LINKS,
+  archiveCompletedTasks,
+  archiveSingleDailyTask,
+  archiveSingleDetailedTask,
+  restoreArchivedTask,
+  restoreAllArchivedTasks,
+  filterArchivedTasks,
 } from './todoLogic';
 
 test('cyclePriority cycles High -> Med -> Low -> High', () => {
@@ -594,7 +612,7 @@ test('resolveKeyboardShortcutAction resolves global, modal, and editable-target 
     'CYCLE_THEME'
   );
 
-  // Sound toggle shortcut (M key)
+  // Sound toggle shortcut (M key) and Dark Mode toggle shortcut (D key)
   assert.equal(
     resolveKeyboardShortcutAction({ key: 'm', isEditableTarget: false }),
     'TOGGLE_SOUND'
@@ -605,6 +623,18 @@ test('resolveKeyboardShortcutAction resolves global, modal, and editable-target 
   );
   assert.equal(
     resolveKeyboardShortcutAction({ key: 'm', isEditableTarget: true }),
+    null
+  );
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'd', isEditableTarget: false }),
+    'TOGGLE_DARK_MODE'
+  );
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'D', isEditableTarget: false }),
+    'TOGGLE_DARK_MODE'
+  );
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'd', isEditableTarget: true }),
     null
   );
 
@@ -807,5 +837,578 @@ test('syncDetailedTaskPriority and syncDailyTaskPriority keep priorities in sync
     'Low'
   );
 });
+
+test('archiveCompletedTasks moves completed tasks to archive list, declutters active board, and supports restoring', () => {
+  const initialColumns = createInitialWeekColumns();
+  const initialDetailed = createInitialDetailedTasks();
+
+  // Initially there are 10 completed daily tasks
+  const initialCounts = countWeekTasksByCompletion(initialColumns);
+  assert.equal(initialCounts.completedCount, 10);
+  assert.equal(initialCounts.pendingCount, 12);
+
+  const { nextColumns, nextDetailedTasks, nextArchive, archivedCount } =
+    archiveCompletedTasks(
+      initialColumns,
+      initialDetailed,
+      [],
+      '2026-06-11T10:00:00.000Z'
+    );
+
+  assert.equal(archivedCount, 10);
+  assert.equal(nextArchive.length, 10);
+
+  // Active daily columns now have 0 completed tasks and all 12 pending tasks intact
+  const afterCounts = countWeekTasksByCompletion(nextColumns);
+  assert.equal(afterCounts.completedCount, 0);
+  assert.equal(afterCounts.pendingCount, 12);
+
+  // Completed detailed tasks are cleared from active detailed view
+  const remainingCompletedDetailed = nextDetailedTasks.filter(
+    (dt) => dt.completed && dt.text.trim().length > 0
+  );
+  assert.equal(remainingCompletedDetailed.length, 0);
+
+  // Filtering archived tasks works by keyword, day, or category
+  const mondayArchived = filterArchivedTasks(nextArchive, 'Monday');
+  assert.equal(mondayArchived.length, 4);
+
+  // Restore a single archived task back to active board
+  const targetToRestore = nextArchive[0];
+  const restoredSingle = restoreArchivedTask(
+    nextColumns,
+    nextDetailedTasks,
+    nextArchive,
+    targetToRestore.archiveId
+  );
+  assert.equal(restoredSingle.nextArchive.length, 9);
+  assert.equal(
+    countWeekTasksByCompletion(restoredSingle.nextColumns).completedCount,
+    1
+  );
+
+  // Restore all remaining archived tasks
+  const restoredAll = restoreAllArchivedTasks(
+    restoredSingle.nextColumns,
+    restoredSingle.nextDetailedTasks,
+    restoredSingle.nextArchive
+  );
+  assert.equal(restoredAll.nextArchive.length, 0);
+  assert.equal(
+    countWeekTasksByCompletion(restoredAll.nextColumns).completedCount,
+    10
+  );
+});
+
+test('archiveSingleDailyTask and archiveSingleDetailedTask archive individual tasks and sync linked views', () => {
+  const initialColumns = createInitialWeekColumns();
+  const initialDetailed = createInitialDetailedTasks();
+
+  // Archive 'dt-1' ("Call dentist" linked to 'mon-3' "Client follow-up")
+  const singleDetailedRes = archiveSingleDetailedTask(
+    initialDetailed,
+    initialColumns,
+    [],
+    'dt-1',
+    '2026-06-11T12:00:00.000Z'
+  );
+
+  assert.equal(singleDetailedRes.nextArchive.length, 1);
+  assert.equal(
+    singleDetailedRes.nextArchive[0].linkedDetailedText,
+    'Call dentist'
+  );
+  assert.equal(
+    singleDetailedRes.nextDetailedTasks.find((t) => t.id === 'dt-1')?.text,
+    ''
+  );
+  assert.equal(
+    countWeekTasksByCompletion(singleDetailedRes.nextColumns).completedCount,
+    9
+  );
+
+  // Archive a single daily task ('tue-3' "Grocery shopping")
+  const singleDailyRes = archiveSingleDailyTask(
+    singleDetailedRes.nextColumns,
+    singleDetailedRes.nextDetailedTasks,
+    singleDetailedRes.nextArchive,
+    'tue',
+    'tue-3',
+    '2026-06-11T12:05:00.000Z'
+  );
+
+  assert.equal(singleDailyRes.nextArchive.length, 2);
+  assert.equal(
+    countWeekTasksByCompletion(singleDailyRes.nextColumns).completedCount,
+    8
+  );
+
+  // Shortcut 'A' resolves to OPEN_ARCHIVE_MODAL when not in editable input
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'a', isEditableTarget: false }),
+    'OPEN_ARCHIVE_MODAL'
+  );
+  assert.equal(
+    resolveKeyboardShortcutAction({ key: 'a', isEditableTarget: true }),
+    null
+  );
+});
+
+test('formatTopBarViewContext formats current route and active view context cleanly', () => {
+  assert.equal(formatTopBarViewContext('/', 'week'), 'Dashboard · This Week');
+  assert.equal(formatTopBarViewContext('/', 'month'), 'Dashboard · This Month');
+  assert.equal(formatTopBarViewContext('/', 'year'), 'Dashboard · This Year');
+  assert.equal(
+    formatTopBarViewContext('/live-progress', 'week'),
+    'Live Progress · This Week'
+  );
+  assert.equal(
+    formatTopBarViewContext('/', 'week', true),
+    '404 · Page Not Found'
+  );
+});
+
+test('addQuickTaskToDayColumn populates the first empty slot or appends a new task and syncs dashboard metrics', () => {
+  const initialColumns = createInitialWeekColumns();
+  const initialDetailed = createInitialDetailedTasks();
+
+  // Thursday initially has 3 active tasks (thu-1, thu-2, thu-3) and 3 blank slots (thu-4, thu-5, thu-6)
+  const thuBefore = initialColumns.find((c) => c.id === 'thu')!;
+  assert.equal(calculateDayProgress(thuBefore.tasks).fractionLabel, '1/3');
+
+  // 1. Empty or whitespace-only input is ignored
+  const emptyRes = addQuickTaskToDayColumn(
+    initialColumns,
+    initialDetailed,
+    'thu',
+    '   '
+  );
+  assert.equal(emptyRes.addedTask, null);
+  assert.equal(emptyRes.nextColumns, initialColumns);
+
+  // 2. Adding a valid task fills the first available blank slot (thu-4)
+  const firstAdd = addQuickTaskToDayColumn(
+    initialColumns,
+    initialDetailed,
+    'thu',
+    '  Send product launch invite  '
+  );
+  assert.ok(firstAdd.addedTask);
+  assert.equal(firstAdd.addedTask.id, 'thu-4');
+  assert.equal(firstAdd.addedTask.text, 'Send product launch invite');
+  assert.equal(firstAdd.addedTask.completed, false);
+  assert.equal(firstAdd.addedTask.status, 'To Do');
+  assert.equal(firstAdd.addedTask.priority, 'Med');
+
+  const thuAfterFirst = firstAdd.nextColumns.find((c) => c.id === 'thu')!;
+  assert.equal(thuAfterFirst.tasks.length, 6);
+  assert.equal(calculateDayProgress(thuAfterFirst.tasks).fractionLabel, '1/4');
+
+  // 3. Fill the remaining 2 blank slots on Thursday (thu-5 and thu-6) and then add a 7th task
+  const secondAdd = addQuickTaskToDayColumn(
+    firstAdd.nextColumns,
+    firstAdd.nextDetailedTasks,
+    'thu',
+    'Review Q3 design mockups'
+  );
+  const thirdAdd = addQuickTaskToDayColumn(
+    secondAdd.nextColumns,
+    secondAdd.nextDetailedTasks,
+    'thu',
+    'Finalize speaker notes'
+  );
+
+  // Now all 6 slots on Thursday are full; adding another task appends a 7th slot
+  const fourthAdd = addQuickTaskToDayColumn(
+    thirdAdd.nextColumns,
+    thirdAdd.nextDetailedTasks,
+    'thu',
+    'Book post-launch retrospective',
+    { priority: 'High', category: 'Work' }
+  );
+
+  assert.ok(fourthAdd.addedTask);
+  assert.equal(fourthAdd.addedTask.text, 'Book post-launch retrospective');
+  assert.equal(fourthAdd.addedTask.priority, 'High');
+  assert.equal(fourthAdd.addedTask.category, 'Work');
+
+  const thuAfterFourth = fourthAdd.nextColumns.find((c) => c.id === 'thu')!;
+  assert.equal(thuAfterFourth.tasks.length, 7);
+  assert.equal(
+    thuAfterFourth.tasks[6].text,
+    'Book post-launch retrospective'
+  );
+  assert.equal(calculateDayProgress(thuAfterFourth.tasks).fractionLabel, '1/7');
+
+  // Verify dashboard metrics reflect the 4 newly added Thursday tasks (22 + 4 = 26 total tasks)
+  const metrics = calculateDashboardMetrics(
+    fourthAdd.nextColumns,
+    fourthAdd.nextDetailedTasks
+  );
+  assert.equal(metrics.totalTasks, 26);
+  assert.equal(metrics.completedTasks, 10);
+});
+
+test('color-coded tag system: syncDailyTaskCategory, syncDetailedTaskCategory, parseQuickTaskTag, and category filtering', async () => {
+  const {
+    parseQuickTaskTag,
+    filterTasksByCategory,
+    filterDayColumnsByCategory,
+    countTasksByCategory,
+  } = await import('./todoLogic');
+
+  const initialColumns = createInitialWeekColumns();
+  const initialDetailed = createInitialDetailedTasks();
+
+  // 1. Cycling daily task category updates the daily task and syncs linked detailed task
+  // 'fri-3' ("Q3 planning session") starts as 'Work' and is linked to 'dt-5' ('Work')
+  const cycledDaily = syncDailyTaskCategory(
+    initialColumns,
+    initialDetailed,
+    'fri',
+    'fri-3'
+  );
+  const fri3After = cycledDaily.nextColumns
+    .find((c) => c.id === 'fri')
+    ?.tasks.find((t) => t.id === 'fri-3');
+  const dt5After = cycledDaily.nextDetailedTasks.find((t) => t.id === 'dt-5');
+  assert.equal(fri3After?.category, 'Personal');
+  assert.equal(dt5After?.category, 'Personal');
+
+  // 2. Cycling detailed task category updates the detailed task and syncs linked daily task
+  const cycledDetailed = syncDetailedTaskCategory(
+    cycledDaily.nextDetailedTasks,
+    cycledDaily.nextColumns,
+    'dt-5'
+  );
+  assert.equal(
+    cycledDetailed.nextDetailedTasks.find((t) => t.id === 'dt-5')?.category,
+    'Health'
+  );
+  assert.equal(
+    cycledDetailed.nextColumns
+      .find((c) => c.id === 'fri')
+      ?.tasks.find((t) => t.id === 'fri-3')?.category,
+    'Health'
+  );
+
+  // 3. Inline #tag extraction in parseQuickTaskTag and addQuickTaskToDayColumn
+  const parsedHealth = parseQuickTaskTag('Morning 5k run #health', 'Work');
+  assert.equal(parsedHealth.cleanText, 'Morning 5k run');
+  assert.equal(parsedHealth.category, 'Health');
+  assert.equal(parsedHealth.hadInlineTag, true);
+
+  const parsedFallback = parseQuickTaskTag('Prepare board deck', 'Finance');
+  assert.equal(parsedFallback.cleanText, 'Prepare board deck');
+  assert.equal(parsedFallback.category, 'Finance');
+  assert.equal(parsedFallback.hadInlineTag, false);
+
+  const quickAddedWithHashtag = addQuickTaskToDayColumn(
+    initialColumns,
+    initialDetailed,
+    'mon',
+    'Evening meditation #health'
+  );
+  assert.ok(quickAddedWithHashtag.addedTask);
+  assert.equal(quickAddedWithHashtag.addedTask.text, 'Evening meditation');
+  assert.equal(quickAddedWithHashtag.addedTask.category, 'Health');
+
+  // 4. Counting and filtering tasks by category tag
+  const activeDetailedCounts = countTasksByCategory(initialDetailed);
+  assert.equal(activeDetailedCounts.Work, 3);
+  assert.equal(activeDetailedCounts.Finance, 3);
+  assert.equal(activeDetailedCounts.Health, 1);
+  assert.equal(activeDetailedCounts.Personal, 1);
+  assert.equal(activeDetailedCounts.Home, 1);
+  assert.equal(activeDetailedCounts.Growth, 1);
+
+  const filteredDetailedHealth = filterTasksByCategory(
+    initialDetailed,
+    'Health'
+  );
+  assert.equal(filteredDetailedHealth.length, 1);
+  assert.equal(filteredDetailedHealth[0].text, 'Book dentist appointment');
+
+  const filteredColsWork = filterDayColumnsByCategory(initialColumns, 'Work');
+  // Monday has 4 active Work tasks
+  assert.equal(filteredColsWork[0].tasks.length, 4);
+  // Saturday has 0 Work tasks
+  assert.equal(filteredColsWork[5].tasks.length, 0);
+
+  // 5. DashboardMetrics.byCategory aggregates category counts across weekly and detailed tasks
+  const initialMetrics = calculateDashboardMetrics(
+    initialColumns,
+    initialDetailed
+  );
+  // Weekly Work tasks (9) + Detailed Work tasks (3) = 12
+  assert.equal(initialMetrics.byCategory.Work, 12);
+  // Weekly Personal tasks (1) + Detailed Personal tasks (1) = 2
+  assert.equal(initialMetrics.byCategory.Personal, 2);
+
+  // After cycling fri-3 ('Work' -> 'Personal'), both fri-3 and linked dt-5 become 'Personal'
+  const updatedMetrics = calculateDashboardMetrics(
+    cycledDaily.nextColumns,
+    cycledDaily.nextDetailedTasks
+  );
+  assert.equal(updatedMetrics.byCategory.Work, 10);
+  assert.equal(updatedMetrics.byCategory.Personal, 4);
+});
+
+test('circular progress indicator: calculateDayProgress computes exact percentage for day columns', () => {
+  const initialColumns = createInitialWeekColumns();
+
+  // Monday has 4 tasks, all completed -> 100%
+  const monProgress = calculateDayProgress(initialColumns[0].tasks);
+  assert.equal(monProgress.completed, 4);
+  assert.equal(monProgress.total, 4);
+  assert.equal(monProgress.percentage, 100);
+  assert.equal(monProgress.fractionLabel, '4/4');
+
+  // Tuesday has 3 tasks, 1 completed -> 33%
+  const tueProgress = calculateDayProgress(initialColumns[1].tasks);
+  assert.equal(tueProgress.completed, 1);
+  assert.equal(tueProgress.total, 3);
+  assert.equal(tueProgress.percentage, 33);
+  assert.equal(tueProgress.fractionLabel, '1/3');
+
+  // Wednesday has 4 tasks, 1 completed -> 25%
+  const wedProgress = calculateDayProgress(initialColumns[2].tasks);
+  assert.equal(wedProgress.completed, 1);
+  assert.equal(wedProgress.total, 4);
+  assert.equal(wedProgress.percentage, 25);
+  assert.equal(wedProgress.fractionLabel, '1/4');
+
+  // Thursday has 3 tasks, 1 completed -> 33%
+  const thuProgress = calculateDayProgress(initialColumns[3].tasks);
+  assert.equal(thuProgress.completed, 1);
+  assert.equal(thuProgress.total, 3);
+  assert.equal(thuProgress.percentage, 33);
+  assert.equal(thuProgress.fractionLabel, '1/3');
+
+  // Empty day column -> 0%
+  const emptyTasks: DailyTask[] = [
+    { id: 'blank-1', text: '', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
+    { id: 'blank-2', text: '—', completed: false, priority: 'Med', status: 'To Do', category: 'Personal', notes: '' },
+  ];
+  const emptyProgress = calculateDayProgress(emptyTasks);
+  assert.equal(emptyProgress.completed, 0);
+  assert.equal(emptyProgress.total, 0);
+  assert.equal(emptyProgress.percentage, 0);
+  assert.equal(emptyProgress.fractionLabel, '0/0');
+
+  // Toggling an uncompleted task increases day percentage
+  const { nextColumns } = syncDailyTaskToggle(initialColumns, createInitialDetailedTasks(), 'thu', 'thu-1');
+  const updatedThuProgress = calculateDayProgress(nextColumns[3].tasks);
+  // Now 2 of 3 tasks completed -> 67%
+  assert.equal(updatedThuProgress.completed, 2);
+  assert.equal(updatedThuProgress.percentage, 67);
+  assert.equal(updatedThuProgress.fractionLabel, '2/3');
+
+  // Theme progressFill colors match expected palettes for circular progress ring
+  assert.equal(THEMES.terracotta.progressFill, '#C87D55');
+  assert.equal(THEMES.candy.progressFill, '#68B694');
+  assert.equal(THEMES.lavender.progressFill, '#7E8CE0');
+  assert.equal(THEMES.neutral.progressFill, '#8C7A6B');
+});
+
+test('cycleRecurringInterval correctly cycles none -> daily -> weekly -> monthly -> none and handles undefined', () => {
+  assert.equal(cycleRecurringInterval(undefined), 'daily');
+  assert.equal(cycleRecurringInterval('none'), 'daily');
+  assert.equal(cycleRecurringInterval('daily'), 'weekly');
+  assert.equal(cycleRecurringInterval('weekly'), 'monthly');
+  assert.equal(cycleRecurringInterval('monthly'), 'none');
+
+  assert.equal(RECURRING_INTERVALS.length, 4);
+  assert.deepEqual(RECURRING_INTERVALS, ['none', 'daily', 'weekly', 'monthly']);
+  assert.equal(RECURRING_CONFIG.daily.label, 'Daily');
+  assert.equal(RECURRING_CONFIG.weekly.label, 'Weekly');
+  assert.equal(RECURRING_CONFIG.monthly.label, 'Monthly');
+  assert.equal(isValidRecurring('daily'), true);
+  assert.equal(isValidRecurring('weekly'), true);
+  assert.equal(isValidRecurring('monthly'), true);
+  assert.equal(isValidRecurring('none'), true);
+  assert.equal(isValidRecurring('yearly'), false);
+  assert.equal(isValidRecurring(null), false);
+});
+
+test('parseQuickTaskTag detects inline recurrence tags (@daily, @weekly, #monthly, repeat:daily) alongside category tags', () => {
+  // Pure recurrence tag
+  const t1 = parseQuickTaskTag('Water plants @daily');
+  assert.equal(t1.cleanText, 'Water plants');
+  assert.equal(t1.recurring, 'daily');
+  assert.equal(t1.hadInlineTag, true);
+
+  // Combined category and recurrence tags
+  const t2 = parseQuickTaskTag('Meal prep #health @weekly');
+  assert.equal(t2.cleanText, 'Meal prep');
+  assert.equal(t2.category, 'Health');
+  assert.equal(t2.recurring, 'weekly');
+  assert.equal(t2.hadInlineTag, true);
+
+  // Hash recurrence tag #monthly
+  const t3 = parseQuickTaskTag('Submit budget report #finance #monthly');
+  assert.equal(t3.cleanText, 'Submit budget report');
+  assert.equal(t3.category, 'Finance');
+  assert.equal(t3.recurring, 'monthly');
+  assert.equal(t3.hadInlineTag, true);
+
+  // repeat: syntax
+  const t4 = parseQuickTaskTag('Team retro repeat:weekly');
+  assert.equal(t4.cleanText, 'Team retro');
+  assert.equal(t4.recurring, 'weekly');
+  assert.equal(t4.hadInlineTag, true);
+
+  // Plain text without recurrence tag preserves fallback
+  const t5 = parseQuickTaskTag('Call contractor', 'Home', 'daily');
+  assert.equal(t5.cleanText, 'Call contractor');
+  assert.equal(t5.category, 'Home');
+  assert.equal(t5.recurring, 'daily');
+  assert.equal(t5.hadInlineTag, false);
+});
+
+test('addQuickTaskToDayColumn populates or appends task with recurrence cadence option', () => {
+  const columns = createInitialWeekColumns();
+  const detailed = createInitialDetailedTasks();
+
+  // Add task to Thursday with explicit recurring option
+  const res1 = addQuickTaskToDayColumn(columns, detailed, 'thu', 'Stretch for 15 mins', {
+    category: 'Health',
+    recurring: 'daily',
+  });
+  assert.ok(res1.addedTask);
+  assert.equal(res1.addedTask?.text, 'Stretch for 15 mins');
+  assert.equal(res1.addedTask?.category, 'Health');
+  assert.equal(res1.addedTask?.recurring, 'daily');
+
+  // Add task with inline tag @weekly
+  const res2 = addQuickTaskToDayColumn(columns, detailed, 'mon', 'Review weekly finances @weekly');
+  assert.ok(res2.addedTask);
+  assert.equal(res2.addedTask?.text, 'Review weekly finances');
+  assert.equal(res2.addedTask?.recurring, 'weekly');
+});
+
+test('regenerateRecurringTask automatically creates pending task in next column for daily recurrence and wraps Sunday to Monday', () => {
+  const columns = createInitialWeekColumns();
+
+  // Daily task completed on Thursday (index 3) should re-generate into Friday (index 4)
+  const thuDailyTask: DailyTask = {
+    id: 'thu-test',
+    text: 'Morning walk',
+    completed: true,
+    priority: 'Low',
+    status: 'Done',
+    category: 'Health',
+    notes: 'Bring water',
+    recurring: 'daily',
+  };
+
+  const regenThu = regenerateRecurringTask(columns, 'thu', thuDailyTask);
+  assert.ok(regenThu.regeneratedTask);
+  assert.equal(regenThu.targetDayId, 'fri');
+  assert.equal(regenThu.targetDayName, 'Friday');
+  assert.equal(regenThu.regeneratedTask?.text, 'Morning walk');
+  assert.equal(regenThu.regeneratedTask?.completed, false);
+  assert.equal(regenThu.regeneratedTask?.status, 'To Do');
+  assert.equal(regenThu.regeneratedTask?.recurring, 'daily');
+  assert.equal(regenThu.regeneratedTask?.category, 'Health');
+
+  // Verify Friday column now has the re-generated task
+  const friCol = regenThu.nextColumns.find((c) => c.id === 'fri');
+  assert.ok(friCol?.tasks.some((t) => t.text === 'Morning walk' && !t.completed));
+
+  // Daily task completed on Sunday (index 6) should wrap around to Monday (index 0)
+  const sunDailyTask: DailyTask = {
+    id: 'sun-test',
+    text: 'Evening meditation',
+    completed: true,
+    priority: 'Med',
+    status: 'Done',
+    category: 'Growth',
+    recurring: 'daily',
+  };
+  const regenSun = regenerateRecurringTask(columns, 'sun', sunDailyTask);
+  assert.ok(regenSun.regeneratedTask);
+  assert.equal(regenSun.targetDayId, 'mon');
+  assert.equal(regenSun.targetDayName, 'Monday');
+
+  // Non-recurring task returns null
+  const nonRecurringTask: DailyTask = {
+    id: 'none-test',
+    text: 'Buy concert tickets',
+    completed: true,
+    priority: 'High',
+    status: 'Done',
+    category: 'Personal',
+    recurring: 'none',
+  };
+  const regenNone = regenerateRecurringTask(columns, 'thu', nonRecurringTask);
+  assert.equal(regenNone.regeneratedTask, null);
+});
+
+test('syncDailyTaskToggle automatically re-generates recurring tasks upon completion and returns target day info', () => {
+  const columns = createInitialWeekColumns();
+  const detailed = createInitialDetailedTasks();
+
+  // thu-3 is initial sample task: 'Exercise - walk dog', completed: false, recurring: 'daily'
+  const targetCol = columns.find((c) => c.id === 'thu');
+  const taskToComplete = targetCol?.tasks.find((t) => t.id === 'thu-3');
+  assert.ok(taskToComplete);
+  assert.equal(taskToComplete?.recurring, 'daily');
+  assert.equal(taskToComplete?.completed, false);
+
+  // Toggling thu-3 marks it completed AND re-generates next instance in Friday
+  const result = syncDailyTaskToggle(columns, detailed, 'thu', 'thu-3');
+
+  // Thu-3 remains completed: true
+  const updatedThuCol = result.nextColumns.find((c) => c.id === 'thu');
+  const updatedThu3 = updatedThuCol?.tasks.find((t) => t.id === 'thu-3');
+  assert.equal(updatedThu3?.completed, true);
+  assert.equal(updatedThu3?.status, 'Done');
+
+  // Returned regenerated info
+  assert.ok(result.regeneratedTask);
+  assert.equal(result.regeneratedTargetDayName, 'Friday');
+  assert.equal(result.regeneratedTask?.text, 'Exercise - walk dog');
+  assert.equal(result.regeneratedTask?.completed, false);
+  assert.equal(result.regeneratedTask?.recurring, 'daily');
+
+  // Friday column contains the new pending instance
+  const updatedFriCol = result.nextColumns.find((c) => c.id === 'fri');
+  assert.ok(
+    updatedFriCol?.tasks.some(
+      (t) => t.text === 'Exercise - walk dog' && !t.completed && t.status === 'To Do'
+    )
+  );
+});
+
+test('persistence and CSV export retain recurring interval state', () => {
+  const columns = createInitialWeekColumns();
+
+  // CSV export includes recurrence annotation [Repeat: daily]
+  const csv = generateCsvExport(columns);
+  assert.ok(csv.includes('[Repeat: daily]'));
+  assert.ok(csv.includes('[Repeat: weekly]'));
+
+  // parsePersistedDashboardState retains recurring cadence
+  const serialized = JSON.stringify({
+    columns,
+    detailedTasks: createInitialDetailedTasks(),
+    monthlyGoals: createInitialMonthlyGoals(),
+    yearlyGoals: createInitialYearlyGoals(),
+    archivedTasks: [],
+    activeTheme: 'terracotta',
+  });
+
+  const parsed = parsePersistedDashboardState(serialized);
+  const thuCol = parsed.columns.find((c) => c.id === 'thu');
+  const thu3 = thuCol?.tasks.find((t) => t.id === 'thu-3');
+  assert.equal(thu3?.recurring, 'daily');
+
+  const thu2 = thuCol?.tasks.find((t) => t.id === 'thu-2');
+  assert.equal(thu2?.recurring, 'weekly');
+});
+
+
+
 
 

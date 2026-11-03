@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Maximize2, Minimize2, X } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { Maximize2, Minimize2 } from 'lucide-react';
 
 interface BrowserFrameProps {
   urlText?: string;
@@ -10,6 +10,7 @@ interface BrowserFrameProps {
   topRightBadge?: React.ReactNode;
   bottomRightBadge?: React.ReactNode;
   allowFullscreen?: boolean;
+  defaultFullscreen?: boolean;
 }
 
 export const BrowserFrame: React.FC<BrowserFrameProps> = ({
@@ -21,62 +22,33 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({
   topRightBadge,
   bottomRightBadge,
   allowFullscreen = true,
+  defaultFullscreen,
 }) => {
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(
+    defaultFullscreen ?? !compact
+  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   const toggleFullscreen = useCallback(() => {
     if (!allowFullscreen) return;
     setIsFullscreen((prev) => {
       const next = !prev;
-      if (next) {
-        if (typeof document !== 'undefined' && containerRef.current?.requestFullscreen) {
-          containerRef.current.requestFullscreen().catch(() => {});
-        }
-      } else {
-        if (typeof document !== 'undefined' && document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
-        }
+      if (!next && typeof document !== 'undefined' && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
       }
       return next;
     });
   }, [allowFullscreen]);
 
-  // Sync with native fullscreen changes (e.g. Esc key pressed by user)
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      if (typeof document !== 'undefined') {
-        const isNativeFs = Boolean(document.fullscreenElement);
-        if (!isNativeFs && isFullscreen) {
-          setIsFullscreen(false);
-        }
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
-        if (typeof document !== 'undefined' && document.fullscreenElement) {
-          document.exitFullscreen().catch(() => {});
-        }
-      }
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isFullscreen]);
-
   return (
     <div
       ref={containerRef}
+      data-testid={compact ? 'mac-browser-frame-compact' : 'mac-browser-frame'}
+      data-fullscreen={isFullscreen ? 'true' : 'false'}
       className={
         isFullscreen
-          ? 'fixed inset-0 z-50 bg-[#FAF7F2] p-1 sm:p-3 overflow-y-auto flex flex-col w-screen h-screen'
-          : `relative mx-auto ${className}`
+          ? 'relative w-full max-w-none flex-1 flex flex-col min-h-[calc(100dvh-var(--navbar-height,57px)-0.75rem)]'
+          : `relative mx-auto w-full max-w-5xl my-auto ${className}`
       }
     >
       {topRightBadge && !isFullscreen && (
@@ -86,12 +58,16 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({
       )}
 
       <div
-        className={`bg-[#FAF8F5] border border-[#E5DEC9]/90 shadow-[0_20px_50px_-12px_rgba(68,53,39,0.16)] overflow-hidden flex flex-col ${
-          isFullscreen ? 'flex-1 rounded-xl sm:rounded-2xl min-h-0' : 'rounded-2xl'
+        className={`bg-[#FAF8F5] border border-[#E5DEC9]/90 shadow-[0_20px_50px_-12px_rgba(68,53,39,0.16)] overflow-hidden flex flex-col w-full ${
+          isFullscreen
+            ? 'flex-1 rounded-xl sm:rounded-2xl min-h-0'
+            : 'rounded-2xl'
         }`}
       >
         {/* Browser Chrome Bar */}
         <div
+          data-browser-chrome-bar="true"
+          data-presentation-hide={!chromeRightSlot ? 'true' : undefined}
           onDoubleClick={toggleFullscreen}
           title="Mac Window Header — Double-click or tap green button to toggle Full Screen"
           className={`bg-[#EFEBE4] border-b border-[#E4DDD3] flex items-center justify-between gap-2 px-3 md:px-4 select-none ${
@@ -99,7 +75,10 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({
           }`}
         >
           {/* macOS Traffic Light Buttons */}
-          <div className="group/traffic flex items-center gap-1.5 shrink-0">
+          <div
+            data-presentation-hide="true"
+            className="group/traffic flex items-center gap-1.5 shrink-0"
+          >
             {/* Red button (Close/Exit fullscreen) */}
             <button
               type="button"
@@ -136,14 +115,14 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({
               </span>
             </button>
 
-            {/* Green button (Full Screen Toggle - Tap to expand full screen!) */}
+            {/* Green button (Full Screen Toggle - Tap to expand/restore full screen!) */}
             <button
               type="button"
               data-testid="mac-fullscreen-btn"
               onClick={toggleFullscreen}
               title={
                 isFullscreen
-                  ? 'Exit Full Screen (Tap or Esc)'
+                  ? 'Exit Full Screen (Switch to windowed view)'
                   : 'Enter Full Screen (Tap green button or double-click)'
               }
               aria-label={
@@ -168,9 +147,12 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({
           </div>
 
           {/* Centered URL / Search Pill */}
-          <div className="flex-1 min-w-0 flex justify-center px-1 sm:px-2">
+          <div
+            data-presentation-hide="true"
+            className="flex-1 min-w-0 flex justify-center px-1 sm:px-2"
+          >
             <div
-              className={`bg-[#F9F7F3] border border-[#E6DFD5] rounded-full w-full max-w-md text-center truncate text-[#8E877F] font-medium ${
+              className={`bg-[#F9F7F3] border border-[#E6DFD5] rounded-full w-full max-w-lg text-center truncate text-[#8E877F] font-medium ${
                 compact
                   ? 'py-0.5 px-2.5 text-[10px]'
                   : 'py-0.5 px-3 sm:px-4 text-[11px] sm:text-xs'
@@ -182,16 +164,22 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({
 
           {/* Right Slot & Full Screen Expand Button */}
           <div className="shrink-0 flex items-center gap-1.5">
+            {topRightBadge && isFullscreen && (
+              <div data-presentation-hide="true" className="scale-75 origin-right">
+                {topRightBadge}
+              </div>
+            )}
             {chromeRightSlot}
 
             {allowFullscreen && !compact && (
               <button
                 type="button"
                 data-testid="mac-expand-toggle-btn"
+                data-presentation-hide="true"
                 onClick={toggleFullscreen}
                 title={
                   isFullscreen
-                    ? 'Exit Full Screen (Esc)'
+                    ? 'Exit Full Screen (Switch to windowed view)'
                     : 'Make Mac window full screen'
                 }
                 aria-label={
@@ -212,29 +200,21 @@ export const BrowserFrame: React.FC<BrowserFrameProps> = ({
         </div>
 
         {/* Browser Content Area */}
-        <div className={`bg-[#FAF7F2] relative ${isFullscreen ? 'flex-1 overflow-y-auto' : ''}`}>
+        <div
+          data-browser-content-area="true"
+          className={`bg-[#FAF7F2] relative flex flex-col ${
+            isFullscreen ? 'flex-1 justify-between overflow-y-auto' : ''
+          }`}
+        >
           {children}
         </div>
       </div>
 
-      {/* Floating Exit Indicator when in Fullscreen */}
-      {isFullscreen && (
-        <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 bg-[#2F2B28]/90 text-white text-[11px] font-semibold px-4 py-1.5 rounded-full shadow-lg backdrop-blur-md flex items-center gap-2">
-          <span>Full Screen Mode</span>
-          <span className="text-[#D8C7B5]">·</span>
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="underline underline-offset-2 hover:text-[#E8BD9A] cursor-pointer flex items-center gap-1"
-          >
-            <span>Exit (Esc)</span>
-            <X className="w-3 h-3" />
-          </button>
-        </div>
-      )}
-
       {bottomRightBadge && !isFullscreen && (
-        <div className="mt-2.5 sm:mt-0 sm:absolute sm:-bottom-3 sm:right-4 z-20 flex justify-end">
+        <div
+          data-presentation-hide="true"
+          className="mt-2.5 sm:mt-0 sm:absolute sm:-bottom-3 sm:right-4 z-20 flex justify-end"
+        >
           {bottomRightBadge}
         </div>
       )}

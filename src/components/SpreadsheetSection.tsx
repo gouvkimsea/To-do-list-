@@ -43,7 +43,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
   const rowIndices = [0, 1, 2, 3, 4, 5]; // rows 2..7 in spreadsheet (row 1 is header)
 
   return (
-    <div className="bg-white rounded-2xl border border-[#DFD8CE] shadow-[0_20px_50px_-12px_rgba(45,60,48,0.15)] overflow-hidden max-w-5xl mx-auto">
+    <div className="bg-white rounded-2xl border border-[#DFD8CE] shadow-[0_20px_50px_-12px_rgba(45,60,48,0.15)] overflow-hidden w-full mx-auto">
       {/* Green Spreadsheet Top Bar */}
       <div className="bg-[#238854] text-white px-4 sm:px-5 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
@@ -96,6 +96,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                 return (
                   <th
                     key={col.id}
+                    data-day-header="true"
                     className="px-2.5 py-2 border border-[#E4DDD3] transition-colors"
                     style={{ backgroundColor: theme.dayHeaders[idx] }}
                   >
@@ -166,6 +167,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                                     onCycleDailyCategory?.(col.id, task.id)
                                   }
                                   data-testid={`spreadsheet-category-badge-${task.id}`}
+                                  data-category-badge={task.category}
                                   title={`Category: ${task.category} (click to cycle)`}
                                   className="px-1 py-0.5 rounded text-[7.5px] font-bold border leading-none cursor-pointer transition-transform active:scale-95"
                                   style={{
