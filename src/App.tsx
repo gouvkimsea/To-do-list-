@@ -10,9 +10,11 @@ import {
   Maximize2,
   Minimize2,
   Moon,
+  Search,
   Sun,
   Volume2,
   VolumeX,
+  X,
 } from 'lucide-react';
 import {
   DayColumn,
@@ -69,6 +71,7 @@ import {
   restoreArchivedTask,
   restoreAllArchivedTasks,
   countWeekTasksByCompletion,
+  countMatchingTasks,
 } from './utils/todoLogic';
 import {
   getSoundPreference,
@@ -711,7 +714,7 @@ export default function App() {
         case 'FOCUS_SEARCH': {
           e.preventDefault();
           const searchInput = document.querySelector<HTMLInputElement>(
-            'input[data-shortcut-search]'
+            'input[data-testid="global-header-search-input"], input[data-shortcut-search]'
           );
           if (searchInput) {
             searchInput.focus();
@@ -1324,6 +1327,11 @@ export default function App() {
     [setTaskSnapshot, handleExplicitSave]
   );
 
+  const globalMatchStats = useMemo(
+    () => countMatchingTasks(columns, monthlyGoals, yearlyGoals, searchQuery),
+    [columns, monthlyGoals, yearlyGoals, searchQuery]
+  );
+
   const sharedPageProps: SharedDashboardPageProps = {
     columns,
     detailedTasks,
@@ -1455,6 +1463,61 @@ export default function App() {
                 >
                   {currentViewContextLabel}
                 </span>
+              </div>
+
+              {/* Global Task Search Bar */}
+              <div
+                className="hidden md:flex items-center flex-1 max-w-sm mx-3"
+                role="search"
+              >
+                <div className="relative w-full flex items-center">
+                  <Search
+                    className="w-3.5 h-3.5 text-[#8A8279] absolute left-3 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    data-testid="global-header-search-input"
+                    onChange={(e) => setSearchQuery(sanitizeTaskText(e.target.value, 120))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        e.preventDefault();
+                        if (searchQuery.trim().length > 0) {
+                          setSearchQuery('');
+                        } else {
+                          e.currentTarget.blur();
+                        }
+                      }
+                    }}
+                    placeholder="Search all tasks, categories, notes... (/)"
+                    aria-label="Global task search across all views"
+                    className="w-full bg-white border border-[#DDD5CB] focus:border-[#C87D55] focus:ring-2 focus:ring-[#C87D55]/20 rounded-full pl-8 pr-16 py-1 text-xs font-medium text-[#2F2B28] placeholder:text-[#9C948B] transition-all focus:outline-none shadow-2xs"
+                  />
+                  {searchQuery.trim().length > 0 ? (
+                    <div className="absolute right-2 flex items-center gap-1">
+                      <span
+                        data-testid="global-header-search-count"
+                        className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#FAF0E6] text-[#A85B33] tabular-nums"
+                      >
+                        {globalMatchStats.totalMatches}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Clear global search"
+                        data-testid="global-header-search-clear"
+                        className="text-[#8A8279] hover:text-[#2F2B28] p-0.5 rounded-full cursor-pointer hover:bg-[#F3EFE9]"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="absolute right-2.5 text-[9px] font-semibold text-[#A89F93] border border-[#E0D8CD] px-1 py-0.2 rounded bg-[#F8F5EE] select-none pointer-events-none">
+                      /
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">

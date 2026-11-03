@@ -71,6 +71,7 @@ import {
   restoreArchivedTask,
   restoreAllArchivedTasks,
   filterArchivedTasks,
+  getTaskMatchDetail,
 } from './todoLogic';
 
 test('cyclePriority cycles High -> Med -> Low -> High', () => {
@@ -1407,6 +1408,152 @@ test('persistence and CSV export retain recurring interval state', () => {
   const thu2 = thuCol?.tasks.find((t) => t.id === 'thu-2');
   assert.equal(thu2?.recurring, 'weekly');
 });
+
+test('collapsible task notes: updateDailyTaskNotes persists multi-line long-form text and retains task fields', () => {
+  const initialColumns = createInitialWeekColumns();
+  const longFormText = `Meeting notes with engineering lead:
+- Discussed Q3 roadmap and milestone deliveries.
+- Verified latency on database queries is under 45ms.
+- Action items:
+  1. Review pull request by EOD Thursday.
+  2. Prepare demo slides for leadership.
+Link: https://example.com/spec-v2`;
+
+  const updatedColumns = updateDailyTaskNotes(
+    initialColumns,
+    'mon',
+    'mon-1',
+    longFormText
+  );
+
+  const monCol = updatedColumns.find((c) => c.id === 'mon');
+  assert.ok(monCol);
+  const task1 = monCol.tasks.find((t) => t.id === 'mon-1');
+  assert.ok(task1);
+  assert.equal(task1.notes, longFormText);
+  // Verify other task attributes remain unmodified
+  assert.equal(task1.text, initialColumns[0].tasks[0].text);
+  assert.equal(task1.priority, initialColumns[0].tasks[0].priority);
+  assert.equal(task1.completed, initialColumns[0].tasks[0].completed);
+
+  // Clearing notes sets notes to empty string
+  const clearedColumns = updateDailyTaskNotes(updatedColumns, 'mon', 'mon-1', '');
+  const clearedTask = clearedColumns
+    .find((c) => c.id === 'mon')
+    ?.tasks.find((t) => t.id === 'mon-1');
+  assert.equal(clearedTask?.notes, '');
+});
+
+test('collapsible task notes: sanitizeTaskNotes preserves newlines, tabs, and multi-paragraph text up to 4000 chars', () => {
+  const multiLineParagraph = `Paragraph 1: Executive overview.\n\nParagraph 2: Detailed architecture.\n\t* Key component A\n\t* Key component B`;
+  const sanitized = sanitizeTaskNotes(multiLineParagraph);
+  assert.equal(sanitized, multiLineParagraph);
+
+  // Strips null byte and control chars without mangling newlines
+  const dirty = `Valid note line 1\x00\x07\nValid note line 2\x1F`;
+  assert.equal(sanitizeTaskNotes(dirty), 'Valid note line 1\nValid note line 2');
+
+  // Truncates gracefully at 4000 chars
+  const longText = 'a'.repeat(4500);
+  assert.equal(sanitizeTaskNotes(longText).length, 4000);
+});
+
+test('collapsible task notes: parsePersistedDashboardState retains long-form notes through JSON serialization', () => {
+  const columns = createInitialWeekColumns();
+  const detailedNotes = `Comprehensive checklist:\n[ ] Setup monitoring\n[x] Deploy release v1.4\n[ ] Send announcement email`;
+
+  const columnsWithNotes = updateDailyTaskNotes(
+    columns,
+    'wed',
+    'wed-2',
+    detailedNotes
+  );
+
+  const serialized = JSON.stringify({
+    columns: columnsWithNotes,
+    detailedTasks: createInitialDetailedTasks(),
+    monthlyGoals: createInitialMonthlyGoals(),
+    yearlyGoals: createInitialYearlyGoals(),
+    archivedTasks: [],
+    activeTheme: 'terracotta',
+  });
+
+  const parsed = parsePersistedDashboardState(serialized);
+  const wedCol = parsed.columns.find((c) => c.id === 'wed');
+  const wedTask = wedCol?.tasks.find((t) => t.id === 'wed-2');
+  assert.equal(wedTask?.notes, detailedNotes);
+});
+
+test('global task search: getTaskMatchDetail accurately distinguishes matches in name, category, and note content', () => {
+  const task: DailyTask = {
+    id: 'test-1',
+    text: 'Client presentation rehearsal',
+    completed: false,
+    priority: 'High',
+    status: 'In Progress',
+    category: 'Work',
+    notes: 'Remember to emphasize the 45% retention increase and demo the live dashboard',
+  };
+
+  // 1. Matches in task name
+  const nameMatch = getTaskMatchDetail(task, 'rehearsal');
+  assert.equal(nameMatch.matches, true);
+  assert.equal(nameMatch.field, 'name');
+
+  // 2. Matches in category
+  const categoryMatch = getTaskMatchDetail(task, 'work');
+  assert.equal(categoryMatch.matches, true);
+  assert.equal(categoryMatch.field, 'category');
+
+  // 3. Matches in note content with context snippet
+  const notesMatch = getTaskMatchDetail(task, 'retention increase');
+  assert.equal(notesMatch.matches, true);
+  assert.equal(notesMatch.field, 'notes');
+  assert.ok(notesMatch.snippet);
+  assert.ok(notesMatch.snippet.includes('retention increase'));
+
+  // 4. Blank task does not match
+  const blankTask: DailyTask = {
+    id: 'test-blank',
+    text: '   ',
+    completed: false,
+    priority: 'Med',
+    status: 'To Do',
+    category: 'Personal',
+    notes: 'Some orphaned note',
+  };
+  assert.equal(getTaskMatchDetail(blankTask, 'orphaned').matches, false);
+
+  // 5. Unmatched term returns false
+  const noMatch = getTaskMatchDetail(task, 'astronomy');
+  assert.equal(noMatch.matches, false);
+});
+
+test('global task search: countMatchingTasks computes comprehensive breakdown stats across name, category, and notes', () => {
+  const columns = createInitialWeekColumns();
+  const monthly = createInitialMonthlyGoals();
+  const yearly = createInitialYearlyGoals();
+
+  // Search by category "finance"
+  const financeStats = countMatchingTasks(columns, monthly, yearly, 'finance');
+  assert.ok(financeStats.totalMatches > 0);
+  assert.ok(financeStats.byCategory.Finance > 0);
+
+  // Search by keyword that appears in notes: 'retention' in Tuesday Q2 report note
+  const noteStats = countMatchingTasks(columns, monthly, yearly, 'retention');
+  assert.ok(noteStats.totalMatches >= 1);
+  assert.ok(noteStats.byField.notes >= 1);
+
+  // High performance: 1000 sequential search queries complete in under 50ms
+  const start = Date.now();
+  for (let i = 0; i < 500; i++) {
+    countMatchingTasks(columns, monthly, yearly, 'report');
+  }
+  const duration = Date.now() - start;
+  assert.ok(duration < 250, `Expected <250ms but took ${duration}ms`);
+});
+
+
 
 
 

@@ -6,6 +6,7 @@ import {
   X,
   GripVertical,
   ChevronDown,
+  ChevronUp,
   Trash2,
   FileText,
   Archive,
@@ -36,7 +37,7 @@ import {
   AnimateLayoutChanges,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { motion, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import {
   CATEGORY_BADGE_STYLES,
   DailyTask,
@@ -62,6 +63,7 @@ import {
   filterDayColumnsByKeyword,
   filterDetailedTasksByKeyword,
   filterTasksByCategory,
+  getTaskMatchDetail,
   isDayAllDone,
   sanitizeTaskText,
 } from '../utils/todoLogic';
@@ -172,7 +174,7 @@ interface SortableDailyTaskRowProps {
   instancePrefix: string;
   checkboxBg: string;
   dndEnabled: boolean;
-  enableTaskNotes: boolean;
+  enableTaskNotes?: boolean;
   onToggleDailyTask: (
     dayId: string,
     taskId: string,
@@ -190,6 +192,7 @@ interface SortableDailyTaskRowProps {
   onUpdateDailyTaskNotes?: (dayId: string, taskId: string, notes: string) => void;
   onArchiveSingleDailyTask?: (dayId: string, taskId: string) => void;
   onQuickSave?: () => void;
+  searchQuery?: string;
 }
 
 const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
@@ -201,7 +204,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
   instancePrefix,
   checkboxBg,
   dndEnabled,
-  enableTaskNotes,
+  enableTaskNotes = true,
   onToggleDailyTask,
   onCycleDailyPriority,
   onCycleDailyCategory,
@@ -211,6 +214,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
   onUpdateDailyTaskNotes,
   onArchiveSingleDailyTask,
   onQuickSave,
+  searchQuery,
 }) => {
   const [isNotesExpanded, setIsNotesExpanded] = useState<boolean>(false);
 
@@ -234,6 +238,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
 
   const isBlank = task.text.trim().length === 0;
   const hasNotes = Boolean(task.notes && task.notes.trim().length > 0);
+  const matchDetail = searchQuery?.trim() ? getTaskMatchDetail(task, searchQuery) : null;
 
   return (
     <motion.div
@@ -338,13 +343,24 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
           }}
         />
 
-        {/* Task Input */}
+        {/* Task Input (Clicking task name opens collapsible notes drawer) */}
         <input
           type="text"
           value={task.text}
           placeholder="—"
           data-task-input={`${instancePrefix}-${dayId}-${idx}`}
+          data-testid={`${instancePrefix}-task-name-${task.id}`}
           aria-label={`${dayName} task ${idx + 1} description (${instancePrefix})`}
+          title={
+            hasNotes
+              ? `Notes: ${task.notes?.slice(0, 80)}${(task.notes?.length ?? 0) > 80 ? '…' : ''} (click to open notes drawer)`
+              : 'Click task name to open notes drawer'
+          }
+          onClick={() => {
+            if (enableTaskNotes && !isNotesExpanded) {
+              setIsNotesExpanded(true);
+            }
+          }}
           onChange={(e) => onUpdateDailyTaskText(dayId, task.id, e.target.value)}
           onKeyDown={(e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -376,6 +392,9 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
               }
             } else if (e.key === 'Escape') {
               e.preventDefault();
+              if (isNotesExpanded) {
+                setIsNotesExpanded(false);
+              }
               e.currentTarget.blur();
             }
           }}
@@ -401,6 +420,10 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
               compact
                 ? 'px-1 py-0.5 text-[7px]'
                 : 'px-1.5 py-0.5 text-[8.5px]'
+            } ${
+              matchDetail?.matches && matchDetail.field === 'category'
+                ? 'ring-2 ring-[#B86B43] shadow-xs'
+                : ''
             }`}
             style={{
               backgroundColor:
@@ -478,11 +501,14 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
           />
         )}
 
-        {/* Expandable Notes Button (DailyColumnsPage) */}
+        {/* Expandable Notes Button */}
         {enableTaskNotes && !compact && (
           <button
             type="button"
-            onClick={() => setIsNotesExpanded((prev) => !prev)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsNotesExpanded((prev) => !prev);
+            }}
             aria-expanded={isNotesExpanded}
             aria-label={`${
               isNotesExpanded ? 'Collapse' : 'Expand'
@@ -526,98 +552,167 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
         )}
       </div>
 
-      {/* Expandable Task Notes Drawer */}
-      {enableTaskNotes && !compact && isNotesExpanded && (
-        <div
-          data-testid={`${instancePrefix}-notes-panel-${task.id}`}
-          className="mt-1.5 p-2 rounded-lg bg-[#FAF7F2] border border-[#E6DFD3] space-y-1.5"
+      {/* Matched Note Snippet Preview (Shown when search keyword matches in note content) */}
+      {!compact && matchDetail?.matches && matchDetail.field === 'notes' && matchDetail.snippet && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsNotesExpanded(true);
+          }}
+          data-testid={`${instancePrefix}-matched-note-${task.id}`}
+          title="Search matched inside note. Click to view full note."
+          className="mt-1 mx-1 px-2 py-0.5 rounded text-[10px] bg-[#FAF0E6] border border-[#ECD9C5] text-[#9A5128] flex items-center gap-1.5 cursor-pointer hover:bg-[#F5E5D5] text-left transition-colors group"
         >
-          <div className="flex items-center justify-between gap-2">
-            <label
-              htmlFor={`${instancePrefix}-notes-input-${task.id}`}
-              className="text-[9px] font-bold uppercase tracking-wider text-[#8C7A6B] whitespace-nowrap"
-            >
-              Notes
-            </label>
-            {hasNotes && (
-              <button
-                type="button"
-                onClick={() => onUpdateDailyTaskNotes?.(dayId, task.id, '')}
-                data-testid={`${instancePrefix}-notes-clear-${task.id}`}
-                className="text-[9px] font-semibold text-[#9C9288] hover:text-[#9E3F38] cursor-pointer whitespace-nowrap"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <textarea
-            id={`${instancePrefix}-notes-input-${task.id}`}
-            data-testid={`${instancePrefix}-notes-input-${task.id}`}
-            rows={2}
-            value={task.notes ?? ''}
-            placeholder="Add details or context... (Ctrl+Enter to save, Esc to close)"
-            onChange={(e) =>
-              onUpdateDailyTaskNotes?.(dayId, task.id, e.target.value)
-            }
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                onQuickSave?.();
-                setIsNotesExpanded(false);
-              } else if (e.key === 'Escape') {
-                e.preventDefault();
-                e.stopPropagation();
-                setIsNotesExpanded(false);
-              }
-            }}
-            className="w-full bg-white border border-[#E2DBD0] focus:border-[#C87D55] focus:outline-none rounded-md px-2 py-1 text-[11px] leading-snug text-[#3B3632] placeholder:text-[#B5ADA3] resize-y"
-          />
-
-          {/* Recurrence Interval Selector in Notes */}
-          <div className="pt-1.5 border-t border-[#ECE5DA] flex items-center justify-between gap-1.5">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-[#8C7A6B] whitespace-nowrap flex items-center gap-1">
-              <Repeat className="w-2.5 h-2.5" />
-              <span>Repeat</span>
-            </span>
-            <div
-              role="radiogroup"
-              aria-label={`Recurrence interval for ${task.text || 'task'}`}
-              className="inline-flex items-center gap-1"
-            >
-              {RECURRING_INTERVALS.map((interval) => {
-                const isSelected = (task.recurring ?? 'none') === interval;
-                const conf = RECURRING_CONFIG[interval];
-                return (
-                  <button
-                    key={interval}
-                    type="button"
-                    role="radio"
-                    aria-checked={isSelected}
-                    data-testid={`${instancePrefix}-notes-recurring-${interval}-${task.id}`}
-                    onClick={() =>
-                      onSetDailyRecurring
-                        ? onSetDailyRecurring(dayId, task.id, interval)
-                        : onCycleDailyRecurring?.(dayId, task.id)
-                    }
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all cursor-pointer leading-none ${
-                      isSelected
-                        ? 'font-bold shadow-2xs'
-                        : 'opacity-70 hover:opacity-100 hover:bg-white'
-                    }`}
-                    style={{
-                      backgroundColor: isSelected ? conf.bg : '#FAF7F2',
-                      color: isSelected ? conf.text : '#736B63',
-                      borderColor: isSelected ? conf.border : '#E2DBD0',
-                    }}
-                  >
-                    {conf.shortLabel}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+          <FileText className="w-2.5 h-2.5 shrink-0 text-[#B86B43]" />
+          <span className="font-bold text-[9px] uppercase tracking-wider text-[#A85B33] shrink-0">
+            Note:
+          </span>
+          <span className="truncate italic font-medium group-hover:text-[#6D2E14]">
+            {matchDetail.snippet}
+          </span>
+        </button>
       )}
+
+      {/* Collapsible 'Notes' Drawer (opens on task name click or button toggle) */}
+      <AnimatePresence initial={false}>
+        {enableTaskNotes && !compact && isNotesExpanded && (
+          <motion.div
+            key={`notes-drawer-${task.id}`}
+            id={`${instancePrefix}-notes-drawer-${task.id}`}
+            data-testid={`${instancePrefix}-notes-drawer-${task.id}`}
+            role="region"
+            aria-label={`Notes for ${task.text || 'task'}`}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div
+              data-testid={`${instancePrefix}-notes-panel-${task.id}`}
+              className="mt-1.5 p-2.5 rounded-lg bg-[#FAF7F2] border border-[#E6DFD3] shadow-xs space-y-2"
+            >
+              {/* Drawer Header */}
+              <div className="flex items-center justify-between gap-2 border-b border-[#ECE5DA] pb-1.5">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#7A6B5D]">
+                  <FileText className="w-3 h-3 text-[#B86B43]" />
+                  <span>Task Notes</span>
+                  {hasNotes && (
+                    <span className="text-[9px] font-semibold text-[#9C9288] normal-case tracking-normal">
+                      · {task.notes?.trim().split(/\s+/).filter(Boolean).length || 0} words
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {hasNotes && (
+                    <button
+                      type="button"
+                      onClick={() => onUpdateDailyTaskNotes?.(dayId, task.id, '')}
+                      data-testid={`${instancePrefix}-notes-clear-${task.id}`}
+                      className="text-[9px] font-semibold text-[#9C9288] hover:text-[#9E3F38] px-1.5 py-0.5 rounded hover:bg-[#F3ECE1] cursor-pointer whitespace-nowrap transition-colors"
+                      title="Clear notes"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsNotesExpanded(false)}
+                    data-testid={`${instancePrefix}-notes-close-${task.id}`}
+                    aria-label={`Collapse notes for ${task.text || 'task'}`}
+                    className="inline-flex items-center gap-0.5 text-[9px] font-bold text-[#6E655F] hover:text-[#2F2B28] px-1.5 py-0.5 rounded bg-white hover:bg-[#F3EFE9] border border-[#DDD6CC] cursor-pointer whitespace-nowrap transition-colors"
+                    title="Collapse notes drawer (Esc)"
+                  >
+                    <ChevronUp className="w-3 h-3" />
+                    <span>Collapse</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Long-form Textarea */}
+              <textarea
+                id={`${instancePrefix}-notes-input-${task.id}`}
+                data-testid={`${instancePrefix}-notes-input-${task.id}`}
+                rows={4}
+                value={task.notes ?? ''}
+                placeholder="Add long-form notes, context, subtasks, or links... (Auto-saved · Ctrl+Enter to save, Esc to close)"
+                onChange={(e) =>
+                  onUpdateDailyTaskNotes?.(dayId, task.id, e.target.value)
+                }
+                onKeyDown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    onQuickSave?.();
+                    setIsNotesExpanded(false);
+                  } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsNotesExpanded(false);
+                  }
+                }}
+                className="w-full bg-white border border-[#E2DBD0] focus:border-[#C87D55] focus:ring-1 focus:ring-[#C87D55]/30 focus:outline-none rounded-md p-2 text-xs leading-relaxed text-[#3B3632] placeholder:text-[#B5ADA3] resize-y min-h-[80px]"
+              />
+
+              {/* Drawer Footer: Persistence status & Recurrence selection */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[9px] text-[#8C7A6B]">
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#84CA9E]" />
+                  <span className="font-medium text-[#7D7368]">
+                    {hasNotes ? 'Auto-saved to storage' : 'Ready for notes'}
+                  </span>
+                  <span className="text-[#B5ADA3]">
+                    · {(task.notes ?? '').length} chars
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold uppercase tracking-wider text-[#8C7A6B] flex items-center gap-1">
+                    <Repeat className="w-2.5 h-2.5" />
+                    <span>Repeat</span>
+                  </span>
+                  <div
+                    role="radiogroup"
+                    aria-label={`Recurrence interval for ${task.text || 'task'}`}
+                    className="inline-flex items-center gap-1"
+                  >
+                    {RECURRING_INTERVALS.map((interval) => {
+                      const isSelected = (task.recurring ?? 'none') === interval;
+                      const conf = RECURRING_CONFIG[interval];
+                      return (
+                        <button
+                          key={interval}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          data-testid={`${instancePrefix}-notes-recurring-${interval}-${task.id}`}
+                          onClick={() =>
+                            onSetDailyRecurring
+                              ? onSetDailyRecurring(dayId, task.id, interval)
+                              : onCycleDailyRecurring?.(dayId, task.id)
+                          }
+                          className={`px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all cursor-pointer leading-none ${
+                            isSelected
+                              ? 'font-bold shadow-2xs'
+                              : 'opacity-70 hover:opacity-100 hover:bg-white'
+                          }`}
+                          style={{
+                            backgroundColor: isSelected ? conf.bg : '#FAF7F2',
+                            color: isSelected ? conf.text : '#736B63',
+                            borderColor: isSelected ? conf.border : '#E2DBD0',
+                          }}
+                        >
+                          {conf.shortLabel}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -790,7 +885,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
   onUpdateDailyTaskText,
   onQuickAddDailyTask,
   onUpdateDailyTaskNotes,
-  enableTaskNotes = false,
+  enableTaskNotes = true,
   onReorderOrMoveDailyTask,
   enableDragAndDrop = false,
   onResetWeek,
@@ -1306,7 +1401,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
 
           {/* Real-Time Task Search Bar */}
           {onSearchQueryChange && !compact && (
-            <div className="relative flex items-center w-full sm:w-auto">
+            <div className="relative flex items-center w-full sm:w-auto" role="search">
               <Search
                 className="w-3.5 h-3.5 text-[#8A8279] absolute left-2.5 pointer-events-none"
                 aria-hidden="true"
@@ -1331,19 +1426,32 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                     e.currentTarget.blur();
                   }
                 }}
-                placeholder="Search tasks... (Press /)"
+                placeholder="Search tasks, tags, notes... (/)"
                 aria-label={`Search tasks (${instancePrefix})`}
-                className="bg-white border border-[#DED8CE] focus:border-[#C87D55] focus:ring-2 focus:ring-[#C87D55]/25 rounded-lg pl-7 pr-6 py-0.5 text-xs font-medium text-[#2F2B28] placeholder:text-[#9C948B] w-full sm:w-64 transition-all focus:outline-none"
+                className="bg-white border border-[#DED8CE] focus:border-[#C87D55] focus:ring-2 focus:ring-[#C87D55]/25 rounded-lg pl-7 pr-16 py-0.5 text-xs font-medium text-[#2F2B28] placeholder:text-[#9C948B] w-full sm:w-68 transition-all focus:outline-none"
               />
-              {isSearching && (
-                <button
-                  type="button"
-                  onClick={() => onSearchQueryChange('')}
-                  aria-label={`Clear task search (${instancePrefix})`}
-                  className="absolute right-1.5 text-[#8A8279] hover:text-[#2F2B28] p-0.5 rounded-full cursor-pointer"
-                >
-                  <X className="w-3 h-3" />
-                </button>
+              {isSearching ? (
+                <div className="absolute right-1.5 flex items-center gap-1">
+                  <span
+                    data-testid={`${instancePrefix}-search-count-pill`}
+                    className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#FAF0E6] text-[#A85B33] tabular-nums"
+                  >
+                    {matchCounts.totalMatches}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onSearchQueryChange('')}
+                    aria-label={`Clear task search (${instancePrefix})`}
+                    data-testid={`${instancePrefix}-clear-search-btn`}
+                    className="text-[#8A8279] hover:text-[#2F2B28] p-0.5 rounded-full cursor-pointer hover:bg-[#F3EFE9]"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <span className="absolute right-2 text-[9px] font-semibold text-[#A89F93] border border-[#E0D8CD] px-1 py-0.2 rounded bg-[#F8F5EE] select-none pointer-events-none">
+                  /
+                </span>
               )}
             </div>
           )}
@@ -1630,6 +1738,44 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
           onDragCancel={handleDragCancel}
         >
           <LayoutGroup id={`${instancePrefix}-week-board`}>
+            {/* Search Match Summary Banner */}
+            {isSearching && !compact && (
+              <div
+                data-testid={`${instancePrefix}-search-results-bar`}
+                className="mb-2 px-3 py-2 rounded-lg bg-[#FAF5EE] border border-[#EADBCC] flex flex-wrap items-center justify-between gap-2 text-xs"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#C87D55]" />
+                  <span className="font-bold text-[#3B342F]">
+                    Found {matchCounts.totalMatches} match{matchCounts.totalMatches === 1 ? '' : 'es'} for “{searchQuery}”
+                  </span>
+                  <span className="text-[11px] text-[#7A7167]">
+                    (This Week: {matchCounts.weeklyMatches} · Month: {matchCounts.monthlyMatches} · Year: {matchCounts.yearlyMatches})
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {matchCounts.byField && matchCounts.byField.notes > 0 && (
+                    <span
+                      data-testid={`${instancePrefix}-search-note-count`}
+                      className="text-[10px] font-semibold bg-[#F5ECE2] text-[#9A5128] px-2 py-0.5 rounded"
+                    >
+                      {matchCounts.byField.notes} matched in notes
+                    </span>
+                  )}
+                  {onSearchQueryChange && (
+                    <button
+                      type="button"
+                      onClick={() => onSearchQueryChange('')}
+                      data-testid={`${instancePrefix}-search-clear-bar`}
+                      className="text-xs font-bold text-[#A85B33] hover:underline cursor-pointer"
+                    >
+                      Clear search
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div
               className={`grid ${compact ? 'gap-1.5' : 'gap-2.5'} ${
               displayedColumns.length === 4
@@ -1637,6 +1783,58 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                 : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7'
             }`}
           >
+            {/* Global Search Empty State Banner when 0 weekly matches */}
+            {isSearching && matchCounts.weeklyMatches === 0 && (
+              <div
+                data-testid={`${instancePrefix}-search-empty-state`}
+                className="col-span-full bg-white rounded-xl border border-[#ECE7DF] p-6 text-center my-2 shadow-xs"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#FAF3EB] text-[#C87D55] flex items-center justify-center mx-auto mb-2.5">
+                  <Search className="w-5 h-5" />
+                </div>
+                <h4 className="text-sm font-bold text-[#2F2B28] mb-1">
+                  No weekly tasks match "{searchQuery}"
+                </h4>
+                <p className="text-xs text-[#7A7269] max-w-md mx-auto mb-3">
+                  {matchCounts.monthlyMatches > 0 || matchCounts.yearlyMatches > 0
+                    ? `Found ${matchCounts.monthlyMatches} match in monthly goals and ${matchCounts.yearlyMatches} in yearly goals.`
+                    : 'Try searching by task name, category (Work, Personal, Health, Finance, Home, Growth), or note content.'}
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  {matchCounts.monthlyMatches > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectView('month')}
+                      data-testid={`${instancePrefix}-search-switch-month`}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF4EC] hover:bg-[#F3E8DB] text-[#A85B33] border border-[#ECD9C5] cursor-pointer transition-colors"
+                    >
+                      View Monthly Matches ({matchCounts.monthlyMatches})
+                    </button>
+                  )}
+                  {matchCounts.yearlyMatches > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onSelectView('year')}
+                      data-testid={`${instancePrefix}-search-switch-year`}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF4EC] hover:bg-[#F3E8DB] text-[#A85B33] border border-[#ECD9C5] cursor-pointer transition-colors"
+                    >
+                      View Yearly Matches ({matchCounts.yearlyMatches})
+                    </button>
+                  )}
+                  {onSearchQueryChange && (
+                    <button
+                      type="button"
+                      onClick={() => onSearchQueryChange('')}
+                      data-testid={`${instancePrefix}-search-clear-empty`}
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#2F2B28] text-white hover:bg-[#433D38] cursor-pointer transition-colors"
+                    >
+                      Clear Search
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
             {displayedColumns.map((col) => {
               const originalIndex = columns.findIndex((c) => c.id === col.id);
               const originalColumn =
@@ -1748,6 +1946,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                             onUpdateDailyTaskNotes={onUpdateDailyTaskNotes}
                             onArchiveSingleDailyTask={onArchiveSingleDailyTask}
                             onQuickSave={onQuickSave}
+                            searchQuery={searchQuery}
                           />
                         ))
                       )}

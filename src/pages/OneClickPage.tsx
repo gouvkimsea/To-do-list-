@@ -35,6 +35,7 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
   onCycleDailyCategory,
   onUpdateDailyTaskText,
   onQuickAddDailyTask,
+  onUpdateDailyTaskNotes,
   onResetWeek,
   onToggleGoalTask,
   onCycleGoalPriority,
@@ -83,6 +84,7 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
             onCycleDailyCategory={onCycleDailyCategory}
             onUpdateDailyTaskText={onUpdateDailyTaskText}
             onQuickAddDailyTask={onQuickAddDailyTask}
+            onUpdateDailyTaskNotes={onUpdateDailyTaskNotes}
             onResetWeek={onResetWeek}
             onToggleGoalTask={onToggleGoalTask}
             onCycleGoalPriority={onCycleGoalPriority}

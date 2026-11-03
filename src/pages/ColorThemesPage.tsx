@@ -20,6 +20,7 @@ export const ColorThemesPage: React.FC<SharedDashboardPageProps> = ({
   onCycleDailyCategory,
   onUpdateDailyTaskText,
   onQuickAddDailyTask,
+  onUpdateDailyTaskNotes,
   onResetWeek,
 }) => {
   return (
@@ -76,6 +77,7 @@ export const ColorThemesPage: React.FC<SharedDashboardPageProps> = ({
                           onCycleDailyCategory={onCycleDailyCategory}
                           onUpdateDailyTaskText={onUpdateDailyTaskText}
                           onQuickAddDailyTask={onQuickAddDailyTask}
+                          onUpdateDailyTaskNotes={onUpdateDailyTaskNotes}
                           onResetWeek={onResetWeek}
                           compact
                           instancePrefix={`theme-${themeKey}`}

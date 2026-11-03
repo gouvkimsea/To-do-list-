@@ -1923,6 +1923,72 @@ export function filterArchivedTasks(
   });
 }
 
+export type SearchMatchField =
+  | 'name'
+  | 'category'
+  | 'notes'
+  | 'priority'
+  | 'status';
+
+export interface TaskMatchDetail {
+  matches: boolean;
+  field?: SearchMatchField;
+  snippet?: string;
+}
+
+export function getTaskMatchDetail(
+  task: {
+    text: string;
+    priority: Priority;
+    status: TaskStatus;
+    category?: TaskCategory;
+    notes?: string;
+  },
+  query: string
+): TaskMatchDetail {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return { matches: true };
+  }
+  if (!task.text.trim() || task.text.trim() === '—') {
+    return { matches: false };
+  }
+
+  const normalized = trimmed.toLowerCase();
+
+  // 1. Task name / text match
+  if (task.text.toLowerCase().includes(normalized)) {
+    return { matches: true, field: 'name' };
+  }
+
+  // 2. Category match (e.g. Work, Health, Personal, Finance, etc.)
+  if (task.category && task.category.toLowerCase().includes(normalized)) {
+    return { matches: true, field: 'category' };
+  }
+
+  // 3. Note content match (with snippet extraction)
+  if (task.notes && task.notes.toLowerCase().includes(normalized)) {
+    const noteLower = task.notes.toLowerCase();
+    const matchIdx = noteLower.indexOf(normalized);
+    const start = Math.max(0, matchIdx - 18);
+    const end = Math.min(task.notes.length, matchIdx + normalized.length + 22);
+    let snippet = task.notes.slice(start, end).replace(/\s+/g, ' ').trim();
+    if (start > 0) snippet = '…' + snippet;
+    if (end < task.notes.length) snippet = snippet + '…';
+    return { matches: true, field: 'notes', snippet };
+  }
+
+  // 4. Priority or status match
+  if (task.priority.toLowerCase().includes(normalized)) {
+    return { matches: true, field: 'priority' };
+  }
+  if (task.status.toLowerCase().includes(normalized)) {
+    return { matches: true, field: 'status' };
+  }
+
+  return { matches: false };
+}
+
 export function matchesSearchKeyword(
   task: {
     text: string;
@@ -1933,21 +1999,7 @@ export function matchesSearchKeyword(
   },
   query: string
 ): boolean {
-  const normalized = query.trim().toLowerCase();
-  if (!normalized) return true;
-  const textMatch = task.text.toLowerCase().includes(normalized);
-  const notesMatch = Boolean(
-    task.notes && task.notes.toLowerCase().includes(normalized)
-  );
-  const priorityMatch = task.priority.toLowerCase().includes(normalized);
-  const statusMatch = task.status.toLowerCase().includes(normalized);
-  const categoryMatch = Boolean(
-    task.category && task.category.toLowerCase().includes(normalized)
-  );
-  return (textMatch || notesMatch) && task.text.trim().length > 0
-    ? true
-    : task.text.trim().length > 0 &&
-        (priorityMatch || statusMatch || categoryMatch);
+  return getTaskMatchDetail(task, query).matches;
 }
 
 export function filterDayColumnsByKeyword(
@@ -2013,38 +2065,138 @@ export function countTasksByCategory(
   return counts;
 }
 
+export interface SearchMatchStats {
+  weeklyMatches: number;
+  monthlyMatches: number;
+  yearlyMatches: number;
+  totalMatches: number;
+  byCategory: Record<TaskCategory, number>;
+  byField: {
+    name: number;
+    category: number;
+    notes: number;
+    priority: number;
+    status: number;
+  };
+}
+
 export function countMatchingTasks(
   columns: DayColumn[],
   monthlyGoals: DetailedTask[],
   yearlyGoals: DetailedTask[],
   query: string
-): {
-  weeklyMatches: number;
-  monthlyMatches: number;
-  yearlyMatches: number;
-  totalMatches: number;
-} {
+): SearchMatchStats {
   const normalized = query.trim();
-  const filteredCols = filterDayColumnsByKeyword(columns, normalized);
-  const weeklyMatches = filteredCols.reduce(
-    (sum, col) =>
-      sum + col.tasks.filter((t) => t.text.trim().length > 0).length,
-    0
-  );
-  const monthlyMatches = filterDetailedTasksByKeyword(
-    monthlyGoals,
-    normalized
-  ).filter((t) => t.text.trim().length > 0).length;
-  const yearlyMatches = filterDetailedTasksByKeyword(
-    yearlyGoals,
-    normalized
-  ).filter((t) => t.text.trim().length > 0).length;
+  const byCategory: Record<TaskCategory, number> = {
+    Work: 0,
+    Personal: 0,
+    Health: 0,
+    Finance: 0,
+    Home: 0,
+    Growth: 0,
+  };
+  const byField = {
+    name: 0,
+    category: 0,
+    notes: 0,
+    priority: 0,
+    status: 0,
+  };
+
+  if (!normalized) {
+    const weeklyTotal = columns.reduce(
+      (sum, col) =>
+        sum +
+        col.tasks.filter((t) => t.text.trim().length > 0 && t.text.trim() !== '—')
+          .length,
+      0
+    );
+    const monthlyTotal = monthlyGoals.filter(
+      (t) => t.text.trim().length > 0 && t.text.trim() !== '—'
+    ).length;
+    const yearlyTotal = yearlyGoals.filter(
+      (t) => t.text.trim().length > 0 && t.text.trim() !== '—'
+    ).length;
+
+    for (const col of columns) {
+      for (const t of col.tasks) {
+        if (t.text.trim().length > 0 && t.text.trim() !== '—') {
+          const cat = isValidCategory(t.category) ? t.category : 'Work';
+          byCategory[cat] = (byCategory[cat] || 0) + 1;
+        }
+      }
+    }
+    for (const t of monthlyGoals) {
+      if (t.text.trim().length > 0 && t.text.trim() !== '—') {
+        const cat = isValidCategory(t.category) ? t.category : 'Work';
+        byCategory[cat] = (byCategory[cat] || 0) + 1;
+      }
+    }
+    for (const t of yearlyGoals) {
+      if (t.text.trim().length > 0 && t.text.trim() !== '—') {
+        const cat = isValidCategory(t.category) ? t.category : 'Work';
+        byCategory[cat] = (byCategory[cat] || 0) + 1;
+      }
+    }
+
+    return {
+      weeklyMatches: weeklyTotal,
+      monthlyMatches: monthlyTotal,
+      yearlyMatches: yearlyTotal,
+      totalMatches: weeklyTotal + monthlyTotal + yearlyTotal,
+      byCategory,
+      byField,
+    };
+  }
+
+  let weeklyMatches = 0;
+  for (const col of columns) {
+    for (const t of col.tasks) {
+      const match = getTaskMatchDetail(t, normalized);
+      if (match.matches) {
+        weeklyMatches++;
+        const cat = isValidCategory(t.category) ? t.category : 'Work';
+        byCategory[cat] = (byCategory[cat] || 0) + 1;
+        if (match.field && byField[match.field] !== undefined) {
+          byField[match.field]++;
+        }
+      }
+    }
+  }
+
+  let monthlyMatches = 0;
+  for (const t of monthlyGoals) {
+    const match = getTaskMatchDetail(t, normalized);
+    if (match.matches) {
+      monthlyMatches++;
+      const cat = isValidCategory(t.category) ? t.category : 'Work';
+      byCategory[cat] = (byCategory[cat] || 0) + 1;
+      if (match.field && byField[match.field] !== undefined) {
+        byField[match.field]++;
+      }
+    }
+  }
+
+  let yearlyMatches = 0;
+  for (const t of yearlyGoals) {
+    const match = getTaskMatchDetail(t, normalized);
+    if (match.matches) {
+      yearlyMatches++;
+      const cat = isValidCategory(t.category) ? t.category : 'Work';
+      byCategory[cat] = (byCategory[cat] || 0) + 1;
+      if (match.field && byField[match.field] !== undefined) {
+        byField[match.field]++;
+      }
+    }
+  }
 
   return {
     weeklyMatches,
     monthlyMatches,
     yearlyMatches,
     totalMatches: weeklyMatches + monthlyMatches + yearlyMatches,
+    byCategory,
+    byField,
   };
 }
 
@@ -2510,7 +2662,7 @@ export function sanitizeTaskText(raw: string, maxLength = 240): string {
   return raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').slice(0, maxLength);
 }
 
-export function sanitizeTaskNotes(raw: string, maxLength = 1000): string {
+export function sanitizeTaskNotes(raw: string, maxLength = 4000): string {
   if (typeof raw !== 'string') return '';
   return raw.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').slice(0, maxLength);
 }
