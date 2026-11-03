@@ -1412,3 +1412,87 @@ test('persistence and CSV export retain recurring interval state', () => {
 
 
 
+
+test('JSON backup export and parse roundtrip preserves full application state safely', () => {
+  const columns = createInitialWeekColumns();
+  columns[0].tasks[0].text = 'Write technical architecture spec';
+  columns[0].tasks[0].notes = 'Must include caching and security layers';
+  columns[0].tasks[0].category = 'Work';
+  columns[0].tasks[0].recurring = 'weekly';
+
+  const detailed = createInitialDetailedTasks();
+  const monthly = createInitialMonthlyGoals();
+  const yearly = createInitialYearlyGoals();
+  const archived = [
+    {
+      archiveId: 'arch-1',
+      originalId: 'mon-1',
+      text: 'Old archived item',
+      completed: true,
+      priority: 'Low' as const,
+      status: 'Done' as const,
+      category: 'Personal' as const,
+      archivedAt: '2026-06-01T10:00:00.000Z',
+    },
+  ];
+
+  const payload = JSON.stringify({
+    schemaVersion: 1,
+    exportedAt: '2026-06-11T12:00:00.000Z',
+    columns,
+    detailedTasks: detailed,
+    monthlyGoals: monthly,
+    yearlyGoals: yearly,
+    archivedTasks: archived,
+    activeTheme: 'candy',
+  });
+
+  const parsed = parsePersistedDashboardState(payload);
+  assert.equal(parsed.columns[0].tasks[0].text, 'Write technical architecture spec');
+  assert.equal(parsed.columns[0].tasks[0].notes, 'Must include caching and security layers');
+  assert.equal(parsed.columns[0].tasks[0].recurring, 'weekly');
+  assert.equal(parsed.activeTheme, 'candy');
+  assert.equal(parsed.archivedTasks.length, 1);
+  assert.equal(parsed.archivedTasks[0].text, 'Old archived item');
+});
+
+test('parsePersistedDashboardState defends against prototype poisoning and malicious payload injection', () => {
+  const maliciousJson = JSON.stringify({
+    __proto__: { isAdmin: true },
+    constructor: { prototype: { polluter: true } },
+    columns: [
+      {
+        id: 'mon',
+        dayName: 'Monday',
+        dateLabel: 'Jun 8',
+        isToday: true,
+        tasks: [
+          {
+            id: 'bad-task',
+            text: '<script>evil()</script>Normal task',
+            completed: false,
+            priority: 'InvalidPriority',
+            category: 'InvalidCategory',
+            recurring: 'InvalidRecurrence',
+            notes: 'Notes with null chars \u0000 and overflow',
+          },
+        ],
+      },
+      // only 1 column provided instead of 7 -> should fallback safely to 7 default columns
+    ],
+  });
+
+  const parsed = parsePersistedDashboardState(maliciousJson);
+  assert.equal(parsed.columns.length, 7);
+  assert.equal((Object.prototype as any).isAdmin, undefined);
+  assert.equal((Object.prototype as any).polluter, undefined);
+});
+
+test('CSV cell sanitization strictly neutralizes spreadsheet formula injection prefixes', () => {
+  assert.equal(sanitizeCsvCell('=1+1'), '"\'=1+1"');
+  assert.equal(sanitizeCsvCell('@SUM(A1:A10)'), '"\'@SUM(A1:A10)"');
+  assert.equal(sanitizeCsvCell('-5'), '"\'-5"');
+  assert.equal(sanitizeCsvCell("+cmd|'/C calc'!A0"), `"'+cmd|'/C calc'!A0"`);
+  assert.equal(sanitizeCsvCell('\t=DDE(...)'), '"\'=DDE(...)"');
+  assert.equal(sanitizeCsvCell('Normal task text'), '"Normal task text"');
+});

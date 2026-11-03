@@ -28,8 +28,25 @@ export const HowItWorksPage: React.FC<SharedDashboardPageProps> = ({
   onCycleGoalStatus,
   onCycleGoalCategory,
   onUpdateGoalText,
+  onQuickSave,
 }) => {
   const [bookmarked, setBookmarked] = useState<boolean>(false);
+
+  const handleBookmarkClick = () => {
+    setBookmarked(true);
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(window.location.href)
+        .then(() => {
+          onQuickSave?.('Link copied! Press Ctrl+D (⌘+D) to bookmark');
+        })
+        .catch(() => {
+          onQuickSave?.('Press Ctrl+D (⌘+D on Mac) to bookmark this page');
+        });
+    } else {
+      onQuickSave?.('Press Ctrl+D (⌘+D on Mac) to bookmark this page');
+    }
+  };
 
   return (
     <section
@@ -44,7 +61,7 @@ export const HowItWorksPage: React.FC<SharedDashboardPageProps> = ({
           topRightBadge={
             <button
               type="button"
-              onClick={() => setBookmarked((b) => !b)}
+              onClick={handleBookmarkClick}
               aria-label="Bookmark this dashboard"
               className="inline-flex items-center gap-1.5 bg-white hover:bg-[#FAF7F2] px-2.5 py-1 rounded-full shadow-xs border border-[#E8E0D5] cursor-pointer"
             >

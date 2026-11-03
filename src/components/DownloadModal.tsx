@@ -1,5 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { X, Download, FileSpreadsheet, CheckCircle2, Play } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Play,
+  Database,
+} from 'lucide-react';
 import {
   DayColumn,
   ThemeId,
@@ -15,6 +24,8 @@ interface DownloadModalProps {
   activeTheme: ThemeId;
   weekRangeLabel: string;
   onExportCsv: () => void;
+  onExportJsonBackup?: () => void;
+  onImportJsonBackup?: (rawJson: string) => boolean;
 }
 
 export const DownloadModal: React.FC<DownloadModalProps> = ({
@@ -25,13 +36,19 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
   activeTheme,
   weekRangeLabel,
   onExportCsv,
+  onExportJsonBackup,
+  onImportJsonBackup,
 }) => {
   const [activeTab, setActiveTab] = useState<'download' | 'demo'>(initialTab);
   const [downloadedItem, setDownloadedItem] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setActiveTab(initialTab);
+      setDownloadedItem(null);
+      setImportError(null);
     }
   }, [initialTab, isOpen]);
 
@@ -67,6 +84,44 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setDownloadedItem('my-tasks.html');
+    setImportError(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        if (!text || typeof text !== 'string') {
+          throw new Error('Empty file content');
+        }
+        if (onImportJsonBackup) {
+          const success = onImportJsonBackup(text);
+          if (success) {
+            setDownloadedItem(`Backup imported from ${file.name}`);
+            setImportError(null);
+          } else {
+            setImportError('Invalid or corrupted backup file format.');
+          }
+        }
+      } catch {
+        setImportError('Failed to parse JSON file. Please ensure it is a valid backup.');
+      } finally {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+    reader.onerror = () => {
+      setImportError('Failed to read file from disk.');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -92,7 +147,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
               id="download-modal-title"
               className="ml-1.5 sm:ml-2 text-xs font-bold text-[#4A433C] truncate"
             >
-              Interactive To-Do Dashboard Bundle
+              Interactive To-Do Dashboard Bundle &amp; Backup
             </h2>
           </div>
 
@@ -123,7 +178,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
                 : 'border-transparent text-[#8A8279] hover:text-[#2F2B28]'
             }`}
           >
-            Instant Digital Download
+            Instant Digital Download &amp; Backup
           </button>
           <button
             type="button"
@@ -136,7 +191,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
                 : 'border-transparent text-[#8A8279] hover:text-[#2F2B28]'
             }`}
           >
-            Quick-Start & Walkthrough
+            Quick-Start &amp; Walkthrough
           </button>
         </div>
 
@@ -151,9 +206,14 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
               {downloadedItem && (
                 <div className="flex items-center gap-2 bg-[#E3F1E6] border border-[#B8DEC0] text-[#265D36] px-3.5 py-2.5 rounded-xl text-xs font-semibold">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>
-                    Downloaded <strong>{downloadedItem}</strong> to your device!
-                  </span>
+                  <span>{downloadedItem}</span>
+                </div>
+              )}
+
+              {importError && (
+                <div className="flex items-center gap-2 bg-[#FDE8E8] border border-[#F8B4B4] text-[#9B1C1C] px-3.5 py-2.5 rounded-xl text-xs font-semibold">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{importError}</span>
                 </div>
               )}
 
@@ -180,7 +240,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
                 <div className="bg-white border border-[#E8E2D8] rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-bold text-[#2F2B28]">
-                      2. Google Sheets & Excel Tracker (.csv)
+                      2. Google Sheets &amp; Excel Tracker (.csv)
                     </div>
                     <div className="text-xs text-[#8A8279]">
                       Horizontal 7-day layout with completion totals
@@ -190,13 +250,61 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
                     type="button"
                     onClick={() => {
                       onExportCsv();
-                      setDownloadedItem('weekly-todo-tracker.csv');
+                      setDownloadedItem('Downloaded weekly-todo-tracker.csv to your device!');
+                      setImportError(null);
                     }}
                     className="bg-[#238854] hover:bg-[#1C6F44] text-white px-4 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 transition-colors cursor-pointer"
                   >
                     <FileSpreadsheet className="w-3.5 h-3.5" />
                     <span>Export Sheet</span>
                   </button>
+                </div>
+
+                <div className="bg-white border border-[#E8E2D8] rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-bold text-[#2F2B28] flex items-center gap-1.5">
+                      <Database className="w-3.5 h-3.5 text-[#5A524A]" />
+                      <span>3. Full Data Backup &amp; Restore (.json)</span>
+                    </div>
+                    <div className="text-xs text-[#8A8279]">
+                      Transfer full planner state, archives &amp; goals between devices
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {onExportJsonBackup && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onExportJsonBackup();
+                          setDownloadedItem('Exported JSON backup file to your device!');
+                          setImportError(null);
+                        }}
+                        className="bg-[#4A433C] hover:bg-[#38332E] text-white px-3.5 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Export Backup</span>
+                      </button>
+                    )}
+                    {onImportJsonBackup && (
+                      <>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".json,application/json"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="bg-[#FAF7F2] hover:bg-[#EFEBE4] text-[#4A433C] border border-[#DDD5C7] px-3.5 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>Restore</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -220,7 +328,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
                     <strong>Click anything to update instantly:</strong> Check off tasks, tap any colored dot to cycle High / Med / Low priority, or tap status pills to cycle To Do / In Progress / Done.
                   </li>
                   <li>
-                    <strong>Switch themes & views anytime:</strong> Toggle between Terracotta, Candy Pastel, Lavender Mist, and Soft Neutral without losing a single task.
+                    <strong>Switch themes &amp; views anytime:</strong> Toggle between Terracotta, Candy Pastel, Lavender Mist, and Soft Neutral without losing a single task.
                   </li>
                 </ol>
               </div>

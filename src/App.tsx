@@ -116,7 +116,8 @@ import { PomodoroProvider } from './components/PomodoroTimer';
 
 const STORAGE_KEY = 'interactive_todo_dashboard_state_v1';
 const BASE_PRODUCTION_URL =
-  'https://ais-pre-qgvyqbwajtw4t5pxppy7eo-715011109838.asia-east1.run.app';
+  (import.meta.env.VITE_APP_URL as string | undefined)?.replace(/\/+$/, '') ||
+  (typeof window !== 'undefined' ? window.location.origin : '');
 
 function loadInitialPersistedState() {
   if (typeof window === 'undefined') {
@@ -239,7 +240,7 @@ export default function App() {
   const [isPresentationMode, setIsPresentationMode] = useState<boolean>(false);
   const scrollLockSnapshotRef = useRef<ScrollLockSnapshot | null>(null);
   const isEnteringFullscreenRef = useRef<boolean>(false);
-  const [saveToastMessage, setSaveToastMessage] = useState<string | null>(null);
+  const [saveToast, setSaveToast] = useState<{ message: string; shortcut?: string } | null>(null);
   const saveToastTimerRef = useRef<number | null>(null);
 
   // Sync colorScheme with DOM and listen for system preference changes if no explicit user preference is stored
@@ -349,7 +350,7 @@ export default function App() {
   }, [columns, detailedTasks, monthlyGoals, yearlyGoals, archivedTasks, activeTheme]);
 
   const handleExplicitSave = useCallback(
-    (customMessage?: string) => {
+    (customMessage?: string, shortcutBadge?: string) => {
       try {
         localStorage.setItem(
           STORAGE_KEY,
@@ -363,17 +364,30 @@ export default function App() {
           })
         );
       } catch {
-        // ignore quota errors
+        setSaveToast({
+          message: 'Local storage full — please export a backup or remove older tasks',
+        });
+        if (typeof window !== 'undefined') {
+          if (saveToastTimerRef.current !== null) {
+            window.clearTimeout(saveToastTimerRef.current);
+          }
+          saveToastTimerRef.current = window.setTimeout(() => {
+            setSaveToast(null);
+            saveToastTimerRef.current = null;
+          }, 4500);
+        }
+        return;
       }
-      setSaveToastMessage(
-        customMessage || 'Saved — all tasks & notes synced locally'
-      );
+      setSaveToast({
+        message: customMessage || 'Saved — all tasks & notes synced locally',
+        shortcut: customMessage ? shortcutBadge : 'Ctrl+Enter',
+      });
       if (typeof window !== 'undefined') {
         if (saveToastTimerRef.current !== null) {
           window.clearTimeout(saveToastTimerRef.current);
         }
         saveToastTimerRef.current = window.setTimeout(() => {
-          setSaveToastMessage(null);
+          setSaveToast(null);
           saveToastTimerRef.current = null;
         }, 2600);
       }
@@ -679,8 +693,8 @@ export default function App() {
           } else if (searchQuery.trim().length > 0) {
             e.preventDefault();
             setSearchQuery('');
-          } else if (saveToastMessage) {
-            setSaveToastMessage(null);
+          } else if (saveToast) {
+            setSaveToast(null);
           }
           break;
         }
@@ -758,7 +772,7 @@ export default function App() {
     modalState.open,
     isPresentationMode,
     searchQuery,
-    saveToastMessage,
+    saveToast,
     currentPath,
     handleExplicitSave,
     handleUndo,
@@ -852,15 +866,13 @@ export default function App() {
     setBothTaskStates(nextColumns, nextDetailedTasks);
 
     if (regeneratedTask && regeneratedTargetDayName) {
-      setSaveToastMessage(
-        `Completed recurring task "${targetTaskText || regeneratedTask.text}"! Automatically re-generated for ${regeneratedTargetDayName}.`
-      );
+      setSaveToast({ message: `Completed recurring task "${targetTaskText || regeneratedTask.text}"! Automatically re-generated for ${regeneratedTargetDayName}.` });
       if (saveToastTimerRef.current !== null && typeof window !== 'undefined') {
         window.clearTimeout(saveToastTimerRef.current);
       }
       saveToastTimerRef.current =
         typeof window !== 'undefined'
-          ? window.setTimeout(() => setSaveToastMessage(null), 4000)
+          ? window.setTimeout(() => setSaveToast(null), 4000)
           : null;
     }
   };
@@ -1259,6 +1271,59 @@ export default function App() {
     return Math.max(dailyCompleted, detailedCompleted);
   }, [columns, detailedTasks]);
 
+  const handleExportJsonBackup = useCallback(() => {
+    try {
+      const payload = JSON.stringify(
+        {
+          schemaVersion: 1,
+          exportedAt: new Date().toISOString(),
+          columns,
+          detailedTasks,
+          monthlyGoals,
+          yearlyGoals,
+          archivedTasks,
+          activeTheme,
+        },
+        null,
+        2
+      );
+      const blob = new Blob([payload], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const datePart = new Date().toISOString().slice(0, 10);
+      a.download = `weekly-todo-backup-${datePart}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      handleExplicitSave('Exported JSON backup file');
+    } catch {
+      handleExplicitSave('Failed to export backup file');
+    }
+  }, [columns, detailedTasks, monthlyGoals, yearlyGoals, archivedTasks, activeTheme, handleExplicitSave]);
+
+  const handleImportJsonBackup = useCallback(
+    (rawJsonString: string): boolean => {
+      try {
+        const parsed = parsePersistedDashboardState(rawJsonString);
+        setTaskSnapshot({
+          columns: parsed.columns,
+          detailedTasks: parsed.detailedTasks,
+          archivedTasks: parsed.archivedTasks,
+        });
+        setMonthlyGoals(parsed.monthlyGoals);
+        setYearlyGoals(parsed.yearlyGoals);
+        setActiveTheme(parsed.activeTheme);
+        handleExplicitSave('Backup restored successfully — all views updated');
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [setTaskSnapshot, handleExplicitSave]
+  );
+
   const sharedPageProps: SharedDashboardPageProps = {
     columns,
     detailedTasks,
@@ -1297,6 +1362,8 @@ export default function App() {
     onCycleGoalCategory: handleCycleGoalCategory,
     onUpdateGoalText: handleUpdateGoalText,
     onExportCsv: handleExportCsv,
+    onExportJsonBackup: handleExportJsonBackup,
+    onImportJsonBackup: handleImportJsonBackup,
     onOpenModal: (tab) => setModalState({ open: true, tab }),
     onOpenShortcutsModal: () => setShortcutsModalOpen(true),
     onOpenArchiveModal: () => setArchiveModalOpen(true),
@@ -1304,7 +1371,7 @@ export default function App() {
     onArchiveCompletedTasks: handleArchiveCompletedTasks,
     onArchiveSingleDailyTask: handleArchiveSingleDailyTask,
     onArchiveSingleDetailedTask: handleArchiveSingleDetailedTask,
-    onQuickSave: () => handleExplicitSave(),
+    onQuickSave: (customMessage?: string) => handleExplicitSave(customMessage),
     onNavigate: handleNavigate,
   };
 
@@ -1490,7 +1557,7 @@ export default function App() {
           {renderActivePage()}
         </main>
 
-        {saveToastMessage && (
+        {saveToast && (
           <div
             role="status"
             aria-live="polite"
@@ -1498,10 +1565,12 @@ export default function App() {
             className="fixed bottom-4 right-4 z-50 flex items-center gap-2 bg-[#2F2B28] text-[#FAF7F2] border border-[#4A433C] px-3.5 py-2 rounded-full shadow-lg text-xs font-bold pointer-events-none"
           >
             <CheckCircle2 className="w-4 h-4 text-[#84CA9E] shrink-0" />
-            <span>{saveToastMessage}</span>
-            <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-[#433E3A] border border-[#5A534C] rounded text-[#E5DEC9]">
-              Ctrl+Enter
-            </kbd>
+            <span>{saveToast.message}</span>
+            {saveToast.shortcut && (
+              <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-[#433E3A] border border-[#5A534C] rounded text-[#E5DEC9]">
+                {saveToast.shortcut}
+              </kbd>
+            )}
           </div>
         )}
 

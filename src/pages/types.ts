@@ -60,6 +60,8 @@ export interface SharedDashboardPageProps {
   onCycleGoalCategory: (mode: 'month' | 'year', taskId: string) => void;
   onUpdateGoalText: (mode: 'month' | 'year', taskId: string, text: string) => void;
   onExportCsv: () => void;
+  onExportJsonBackup?: () => void;
+  onImportJsonBackup?: (rawJson: string) => boolean;
   onOpenModal: (tab: 'download' | 'demo') => void;
   onOpenShortcutsModal?: () => void;
   onOpenArchiveModal?: () => void;
@@ -67,7 +69,6 @@ export interface SharedDashboardPageProps {
   onArchiveCompletedTasks?: () => void;
   onArchiveSingleDailyTask?: (dayId: string, taskId: string) => void;
   onArchiveSingleDetailedTask?: (taskId: string) => void;
-  onQuickSave?: () => void;
+  onQuickSave?: (customMessage?: string) => void;
   onNavigate: (path: PagePath) => void;
 }
-

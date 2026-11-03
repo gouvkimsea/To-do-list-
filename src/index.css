@@ -39,7 +39,7 @@ h2,
 h3,
 h4,
 circle {
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity, transform;
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow, opacity;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
