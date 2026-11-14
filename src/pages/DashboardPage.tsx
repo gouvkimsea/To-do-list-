@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { BrowserFrame } from '../components/BrowserFrame';
 import { LiveProgressBoard } from '../components/LiveProgressSection';
 import { WeeklyProgressTrendsChart } from '../components/WeeklyProgressTrendsChart';
