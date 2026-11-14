@@ -33,6 +33,7 @@ input,
 textarea,
 span,
 kbd,
+code,
 p,
 h1,
 h2,
@@ -162,14 +163,21 @@ html.dark .bg-white {
   background-color: #1F1C18 !important;
 }
 
+html.dark .bg-white\/70,
+html.dark .bg-white\/80 {
+  background-color: rgba(31, 28, 24, 0.75) !important;
+}
+
 html.dark .bg-\[\#FDFBF7\],
-html.dark .bg-\[\#FCFBF9\] {
+html.dark .bg-\[\#FCFBF9\],
+html.dark .bg-\[\#FDFBF8\] {
   background-color: #1C1916 !important;
 }
 
 html.dark .bg-\[\#FAF8F5\],
 html.dark .bg-\[\#FAF7F2\],
-html.dark .bg-\[\#F9F7F3\] {
+html.dark .bg-\[\#F9F7F3\],
+html.dark .bg-\[\#FAF5EE\] {
   background-color: #171412 !important;
 }
 
@@ -185,7 +193,9 @@ html.dark .bg-\[\#FAF6F0\]\/90 {
 html.dark .bg-\[\#F5F1EB\],
 html.dark .bg-\[\#F4EFE6\],
 html.dark .bg-\[\#F2EFE9\],
-html.dark .bg-\[\#F0EBE1\] {
+html.dark .bg-\[\#F0EBE1\],
+html.dark .bg-\[\#F8F5EE\],
+html.dark .bg-\[\#F5ECE2\] {
   background-color: #26221E !important;
 }
 
@@ -199,21 +209,62 @@ html.dark .bg-\[\#E4DDD3\] {
   background-color: #2B2622 !important;
 }
 
-/* 3. Warm Terracotta / Amber / Sage / Lavender Tinted Surfaces */
+/* 3. Primary Solid Dark Buttons in Light Mode -> Invert cleanly in Dark Mode */
+html.dark .bg-\[\#2F2B28\] {
+  background-color: #FAF6F0 !important;
+  color: #141210 !important;
+  border-color: #FAF6F0 !important;
+}
+
+html.dark .bg-\[\#2F2B28\].text-white,
+html.dark .bg-\[\#2F2B28\] > span,
+html.dark button.bg-\[\#2F2B28\] {
+  color: #141210 !important;
+}
+
+html.dark .hover\:bg-\[\#433E39\]:hover,
+html.dark .hover\:bg-\[\#433E3A\]:hover,
+html.dark .hover\:bg-\[\#433D38\]:hover {
+  background-color: #E8E2D9 !important;
+  color: #141210 !important;
+}
+
+/* Specific floating toast & presentation exit button */
+html.dark [data-testid="shortcut-save-toast"] {
+  background-color: #1F1C18 !important;
+  border-color: #4D443A !important;
+  color: #FAF6F0 !important;
+}
+
+html.dark [data-testid="exit-presentation-mode-btn"] {
+  background-color: #2B2622 !important;
+  border-color: #4D443A !important;
+  color: #FAF6F0 !important;
+}
+
+html.dark [data-testid="exit-presentation-mode-btn"] span {
+  color: #FAF6F0 !important;
+}
+
+/* 4. Warm Terracotta / Amber / Sage / Lavender / Green / Red Surfaces */
 html.dark .bg-\[\#FAF4EC\],
 html.dark .bg-\[\#FAF3EB\],
 html.dark .bg-\[\#FAF0E3\],
 html.dark .bg-\[\#F6ECE3\],
 html.dark .bg-\[\#FAE8CE\],
 html.dark .bg-\[\#F5E0D2\],
-html.dark .bg-\[\#F5DFD0\] {
+html.dark .bg-\[\#F5DFD0\],
+html.dark .bg-\[\#FAF0E6\] {
   background-color: #33241C !important;
 }
 
 html.dark .bg-\[\#EFF3EE\],
 html.dark .bg-\[\#E3F1E6\],
 html.dark .bg-\[\#DFECE0\],
-html.dark .bg-\[\#CBEAD6\] {
+html.dark .bg-\[\#CBEAD6\],
+html.dark .bg-\[\#84CA9E\],
+html.dark .bg-\[\#647F5E\],
+html.dark .bg-\[\#4E7E59\] {
   background-color: #1B2E22 !important;
 }
 
@@ -221,7 +272,23 @@ html.dark .bg-\[\#E6E2F3\] {
   background-color: #272238 !important;
 }
 
-/* 4. Hover & Focus Surface States */
+html.dark .bg-\[\#FDE8E8\] {
+  background-color: #3A1E1E !important;
+}
+
+html.dark .bg-\[\#238854\] {
+  background-color: #184D32 !important;
+}
+
+html.dark .bg-\[\#D8C3B0\] {
+  background-color: #4D4238 !important;
+}
+
+html.dark .bg-\[\#433E3A\] {
+  background-color: #38322D !important;
+}
+
+/* 5. Hover & Focus Surface States */
 html.dark .hover\:bg-white:hover,
 html.dark .hover\:bg-\[\#FDFBF8\]:hover {
   background-color: #26221E !important;
@@ -243,13 +310,29 @@ html.dark .hover\:bg-\[\#EBE4DA\]:hover,
 html.dark .hover\:bg-\[\#EAE3D6\]:hover,
 html.dark .hover\:bg-\[\#EAE2D6\]:hover,
 html.dark .hover\:bg-\[\#EAE1D3\]:hover,
+html.dark .hover\:bg-\[\#F3ECE1\]:hover,
 html.dark .hover\:bg-\[\#E4DDD3\]\/70:hover {
   background-color: #322C27 !important;
 }
 
 html.dark .hover\:bg-\[\#EFE0D3\]:hover,
-html.dark .hover\:bg-\[\#EED2BF\]:hover {
+html.dark .hover\:bg-\[\#EED2BF\]:hover,
+html.dark .hover\:bg-\[\#F5E5D5\]:hover,
+html.dark .hover\:bg-\[\#F3E8DB\]:hover {
   background-color: #422E23 !important;
+}
+
+html.dark .hover\:bg-\[\#AD5D35\]:hover,
+html.dark .hover\:bg-\[\#AE5D35\]:hover {
+  background-color: #C26D43 !important;
+}
+
+html.dark .hover\:bg-\[\#1C6F44\]:hover {
+  background-color: #238854 !important;
+}
+
+html.dark .hover\:bg-\[\#38332E\]:hover {
+  background-color: #2A2520 !important;
 }
 
 html.dark .hover\:bg-\[\#D1E3D3\]:hover {
@@ -268,12 +351,13 @@ html.dark .focus\:bg-\[\#FAF6F0\]:focus {
   background-color: #28231F !important;
 }
 
-/* 5. Typography Hierarchy in Dark Mode */
+/* 6. Typography Hierarchy in Dark Mode */
 html.dark .text-\[\#2F2B28\],
 html.dark .text-\[\#2F2C2A\],
 html.dark .text-\[\#2C2623\],
 html.dark .text-\[\#3B3530\],
-html.dark .text-\[\#3B3632\] {
+html.dark .text-\[\#3B3632\],
+html.dark .text-\[\#3B342F\] {
   color: #F4EFE8 !important;
 }
 
@@ -288,6 +372,8 @@ html.dark .text-\[\#6E675F\],
 html.dark .text-\[\#7A7269\],
 html.dark .text-\[\#7A6E63\],
 html.dark .text-\[\#7A624D\],
+html.dark .text-\[\#7A6B5D\],
+html.dark .text-\[\#7A7167\],
 html.dark .text-\[\#8A8279\],
 html.dark .text-\[\#8C8379\],
 html.dark .text-\[\#8C7A6B\],
@@ -296,7 +382,8 @@ html.dark .text-\[\#8E877F\],
 html.dark .text-\[\#9A8F82\],
 html.dark .text-\[\#9A9288\],
 html.dark .text-\[\#9C9288\],
-html.dark .text-\[\#9C948B\] {
+html.dark .text-\[\#9C948B\],
+html.dark .text-\[\#A89F93\] {
   color: #AEA498 !important;
 }
 
@@ -327,14 +414,17 @@ html.dark .text-\[\#B05C37\],
 html.dark .text-\[\#B07B54\],
 html.dark .text-\[\#A85B33\],
 html.dark .text-\[\#9A4E28\],
+html.dark .text-\[\#9A5128\],
 html.dark .text-\[\#9E6B47\],
 html.dark .text-\[\#9E6826\],
 html.dark .text-\[\#9C7B49\],
-html.dark .text-\[\#8C623E\] {
+html.dark .text-\[\#8C623E\],
+html.dark .text-\[\#E4B34C\] {
   color: #E8956B !important;
 }
 
-html.dark .text-\[\#8C3B32\] {
+html.dark .text-\[\#8C3B32\],
+html.dark .text-\[\#9B1C1C\] {
   color: #F08C82 !important;
 }
 
@@ -345,7 +435,8 @@ html.dark .text-\[\#3F6F4A\],
 html.dark .text-\[\#3F7A4D\],
 html.dark .text-\[\#446B4D\],
 html.dark .text-\[\#4A8B63\],
-html.dark .text-\[\#4C7C57\] {
+html.dark .text-\[\#4C7C57\],
+html.dark .text-\[\#84CA9E\] {
   color: #82CFA0 !important;
 }
 
@@ -363,7 +454,8 @@ html.dark .hover\:text-\[\#7D7368\]:hover {
   color: #FAF6F0 !important;
 }
 
-html.dark .hover\:text-\[\#B05C37\]:hover {
+html.dark .hover\:text-\[\#B05C37\]:hover,
+html.dark .hover\:text-\[\#6D2E14\]:hover {
   color: #F0A27B !important;
 }
 
@@ -371,13 +463,17 @@ html.dark .hover\:text-\[\#9E3F38\]:hover {
   color: #F58E86 !important;
 }
 
-/* 6. Borders & Dividers in Dark Mode */
+/* 7. Borders & Dividers in Dark Mode */
 html.dark .border-\[\#D8CFC2\],
 html.dark .border-\[\#DCD3C6\],
 html.dark .border-\[\#DDD4C6\],
+html.dark .border-\[\#DDD5CB\],
+html.dark .border-\[\#DDD5C7\],
+html.dark .border-\[\#DDD6CC\],
 html.dark .border-\[\#DED6CA\],
 html.dark .border-\[\#DED8CE\],
 html.dark .border-\[\#DFD8CE\],
+html.dark .border-\[\#E0D8CD\],
 html.dark .border-\[\#E0D9CE\],
 html.dark .border-\[\#E2D9CC\],
 html.dark .border-\[\#E2DAD0\],
@@ -392,8 +488,10 @@ html.dark .border-\[\#E8E0D5\],
 html.dark .border-\[\#E8E2D8\],
 html.dark .border-\[\#E8E2D9\],
 html.dark .border-\[\#EAE4DC\],
+html.dark .border-\[\#ECE5DA\],
 html.dark .border-\[\#ECE7DF\],
-html.dark .border-\[\#EDE6DC\] {
+html.dark .border-\[\#EDE6DC\],
+html.dark .border-\[\#EADBCC\] {
   border-color: #342E29 !important;
 }
 
@@ -404,13 +502,16 @@ html.dark .border-\[\#F4F0E8\] {
   border-color: #292420 !important;
 }
 
+html.dark .divide-\[\#F5F2EC\] > :not(:last-child),
 html.dark .divide-\[\#F4F0E8\] > :not(:last-child),
 html.dark .divide-\[\#F2EFE9\] > :not(:last-child),
 html.dark .divide-\[\#F2ECE3\] > :not(:last-child) {
   border-color: #2A2521 !important;
 }
 
-html.dark .border-\[\#E5C5AF\] {
+html.dark .border-\[\#E5C5AF\],
+html.dark .border-\[\#ECD9C5\],
+html.dark .border-\[\#D8B49E\] {
   border-color: #543828 !important;
 }
 
@@ -419,20 +520,35 @@ html.dark .border-\[\#DCE6DA\] {
   border-color: #2A4735 !important;
 }
 
-html.dark .hover\:border-\[\#D6CBB9\]:hover {
+html.dark .border-\[\#F8B4B4\] {
+  border-color: #5E2E2E !important;
+}
+
+html.dark .hover\:border-\[\#D6CBB9\]:hover,
+html.dark .hover\:border-\[\#D5C9BD\]:hover {
   border-color: #4D443C !important;
 }
 
-/* 7. Component-Specific Dark Mode Adaptations */
+html.dark .ring-\[\#7C736A\],
+html.dark .ring-\[\#7D746B\] {
+  --tw-ring-color: #A69B8E !important;
+}
+
+/* 8. Component-Specific Dark Mode Adaptations */
 
 /* Unchecked Checkboxes */
 html.dark [role="checkbox"][aria-checked="false"],
 html.dark [data-demo-checkbox="false"] {
   background-color: #26221E !important;
-  border-color: #4E453C !important;
+  border: 1.5px solid #4E453C !important;
 }
 
-/* Pastel Day Column Headers: keep warm pastel saturation balanced with crisp dark espresso text */
+/* Blank Priority Dot in Task Slots */
+html.dark [data-blank-task="true"] {
+  background-color: #433B33 !important;
+}
+
+/* Day Column Headers */
 html.dark [data-day-header="true"] {
   filter: saturate(0.85) brightness(0.88);
 }
@@ -515,6 +631,118 @@ html.dark [data-status-pill="Done"] {
   color: #88D9A4 !important;
 }
 
+/* Recurring Badges & Buttons in Dark Mode */
+html.dark [data-recurring-badge="daily"],
+html.dark [data-recurring-interval="daily"][data-selected="true"] {
+  background-color: #1D263B !important;
+  color: #93B4F5 !important;
+  border-color: #2E3D5E !important;
+}
+
+html.dark [data-recurring-badge="weekly"],
+html.dark [data-recurring-interval="weekly"][data-selected="true"] {
+  background-color: #2B1D38 !important;
+  color: #D2A5F7 !important;
+  border-color: #462F5C !important;
+}
+
+html.dark [data-recurring-badge="monthly"],
+html.dark [data-recurring-interval="monthly"][data-selected="true"] {
+  background-color: #382914 !important;
+  color: #F4C778 !important;
+  border-color: #584120 !important;
+}
+
+html.dark [data-recurring-badge="none"],
+html.dark [data-recurring-interval="none"][data-selected="true"] {
+  background-color: #26221E !important;
+  color: #AEA498 !important;
+  border-color: #3B342E !important;
+}
+
+html.dark [data-recurring-interval][data-selected="false"] {
+  background-color: #1F1C18 !important;
+  color: #8A8175 !important;
+  border-color: #342E29 !important;
+}
+
+/* Task Notes Collapsible Drawer in Dark Mode */
+html.dark [data-notes-drawer="true"] {
+  background-color: #1A1714 !important;
+  border-color: #38312B !important;
+}
+
+html.dark [data-notes-drawer="true"] textarea {
+  background-color: #141210 !important;
+  border-color: #38312B !important;
+  color: #F4EFE8 !important;
+}
+
+/* Keyboard Shortcut Badges */
+html.dark kbd {
+  background-color: #2B2622 !important;
+  border-color: #453E37 !important;
+  color: #FAF6F0 !important;
+}
+
+/* Inline Code Snippets */
+html.dark code {
+  background-color: #24201C !important;
+  color: #E8956B !important;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  border: 1px solid #38312A;
+}
+
+/* Theme Labels on ColorThemesPage */
+html.dark [data-theme-label="terracotta"] {
+  color: #E8956B !important;
+}
+
+html.dark [data-theme-label="candy"] {
+  color: #F2A2C6 !important;
+}
+
+html.dark [data-theme-label="lavender"] {
+  color: #C9BDF5 !important;
+}
+
+html.dark [data-theme-label="neutral"] {
+  color: #D9D0C5 !important;
+}
+
+/* Spreadsheet Pills in Dark Mode */
+html.dark [data-spreadsheet-pill="done"] {
+  background-color: #2E7D4E !important;
+}
+
+html.dark [data-spreadsheet-pill="progress"] {
+  background-color: #2C5E8A !important;
+}
+
+html.dark [data-spreadsheet-pill="high"] {
+  background-color: #B84A42 !important;
+}
+
+html.dark [data-spreadsheet-pill="med"] {
+  background-color: #B88A2E !important;
+}
+
+html.dark [data-spreadsheet-pill="low"] {
+  background-color: #4A7C59 !important;
+}
+
+/* Pomodoro Mode Switcher */
+html.dark [role="group"][aria-label="Focus timer mode"] {
+  background-color: #24201C !important;
+  border-color: #38312B !important;
+}
+
+html.dark [role="group"][aria-label="Focus timer mode"] button[aria-pressed="true"] {
+  background-color: #38312B !important;
+  color: #FAF6F0 !important;
+}
+
 /* Donut Chart Rings */
 .donut-track-ring {
   stroke: var(--donut-track-stroke);
@@ -522,6 +750,14 @@ html.dark [data-status-pill="Done"] {
 
 .donut-progress-ring {
   stroke: var(--donut-progress-stroke);
+}
+
+/* Soft, cohesive shadows in Dark Mode without harsh brown halos */
+html.dark .shadow-2xl,
+html.dark .shadow-xl,
+html.dark .shadow-lg,
+html.dark [class*="shadow-[0_"] {
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.45) !important;
 }
 
 /* ==========================================================================

@@ -189,6 +189,13 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                                   onClick={() => onToggleDailyTask(col.id, task.id)}
                                   aria-label={`Toggle spreadsheet status for ${task.text}`}
                                   title={`${task.status} (${task.priority}) — click to toggle`}
+                                  data-spreadsheet-pill={
+                                    task.completed || task.status === 'Done'
+                                      ? 'done'
+                                      : task.status === 'In Progress'
+                                      ? 'progress'
+                                      : task.priority.toLowerCase()
+                                  }
                                   className="w-6 h-3.5 rounded-full shrink-0 transition-transform hover:scale-105 cursor-pointer"
                                   style={{ backgroundColor: pillColor }}
                                 />

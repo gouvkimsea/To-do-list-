@@ -333,6 +333,8 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
             task.text || `${dayName} slot ${idx + 1}`
           } (currently ${task.priority}) (${instancePrefix})`}
           title={`Priority: ${task.priority} (click to cycle)`}
+          data-blank-task={isBlank ? 'true' : 'false'}
+          data-priority-dot={task.priority}
           className={`${
             compact ? 'w-1.5 h-1.5' : 'w-2 h-2'
           } rounded-full shrink-0 transition-transform hover:scale-125 cursor-pointer`}
@@ -590,6 +592,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
             className="overflow-hidden"
           >
             <div
+              data-notes-drawer="true"
               data-testid={`${instancePrefix}-notes-panel-${task.id}`}
               className="mt-1.5 p-2.5 rounded-lg bg-[#FAF7F2] border border-[#E6DFD3] shadow-xs space-y-2"
             >
@@ -685,6 +688,8 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
                           type="button"
                           role="radio"
                           aria-checked={isSelected}
+                          data-recurring-interval={interval}
+                          data-selected={isSelected ? 'true' : 'false'}
                           data-testid={`${instancePrefix}-notes-recurring-${interval}-${task.id}`}
                           onClick={() =>
                             onSetDailyRecurring

@@ -88,6 +88,7 @@ export const ColorThemesPage: React.FC<SharedDashboardPageProps> = ({
                     <button
                       type="button"
                       aria-pressed={isCurrent}
+                      data-theme-label={themeKey}
                       onClick={() => onSelectTheme(themeKey)}
                       className="mt-2 text-sm sm:text-base font-extrabold tracking-tight cursor-pointer transition-transform hover:scale-105"
                       style={{ color: t.labelColor }}
