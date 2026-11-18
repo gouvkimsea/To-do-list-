@@ -1,10 +1,19 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
+  }
+
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: #FAF6F0;
     color: #2D2A26;
+    overflow-x: hidden;
+    min-width: 320px;
+    -webkit-tap-highlight-color: transparent;
     transition: background-color 220ms cubic-bezier(0.4, 0, 0.2, 1),
       color 180ms cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -13,6 +22,34 @@
     background-color: #141210;
     color: #F4EFE8;
   }
+}
+
+/* Mobile & Touch-Friendly Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.touch-scroll-x {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.touch-snap-start {
+  scroll-snap-align: start;
+}
+
+.safe-bottom {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.safe-top {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
 }
 
 /* Smooth theme transition across surfaces, borders, text, and controls */

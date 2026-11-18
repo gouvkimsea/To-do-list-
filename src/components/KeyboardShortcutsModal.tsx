@@ -38,7 +38,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="keyboard-shortcuts-modal-title"
@@ -49,9 +49,9 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         }
       }}
     >
-      <div className="bg-[#FAF7F2] border border-[#E2D9CC] rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
+      <div className="bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#E2D9CC] dark:border-[#38332E] rounded-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Modal Top Chrome Bar */}
-        <div className="bg-[#EFEBE4] px-4 sm:px-5 py-3 border-b border-[#E2D9CC] flex items-center justify-between shrink-0">
+        <div className="bg-[#EFEBE4] dark:bg-[#28231E] px-3 sm:px-5 py-3 border-b border-[#E2D9CC] dark:border-[#38332E] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-3 h-3 rounded-full bg-[#ED6A5E] shrink-0" />
             <span className="w-3 h-3 rounded-full bg-[#F4BF4F] shrink-0" />
@@ -60,7 +60,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
               <Keyboard className="w-3.5 h-3.5 text-[#B05C37] shrink-0" />
               <h2
                 id="keyboard-shortcuts-modal-title"
-                className="text-xs sm:text-sm font-bold text-[#2F2B28] truncate"
+                className="text-xs sm:text-sm font-bold text-[#2F2B28] dark:text-[#EDE8E1] truncate"
               >
                 Keyboard Shortcuts &amp; Quick Navigation
               </h2>
@@ -72,9 +72,9 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             onClick={onClose}
             aria-label="Close keyboard shortcuts modal"
             data-testid="close-shortcuts-modal-btn"
-            className="text-[#7A7269] hover:text-[#2F2B28] px-2 py-1 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold"
+            className="text-[#7A7269] hover:text-[#2F2B28] px-2 py-1 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold touch-manipulation min-h-[36px]"
           >
-            <kbd className="px-1.5 py-0.5 text-[10px] font-bold bg-white border border-[#D8CFC2] rounded text-[#5A534C]">
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-bold bg-white dark:bg-[#2B2622] border border-[#D8CFC2] dark:border-[#423C35] rounded text-[#5A534C] dark:text-[#D5CFC7]">
               Esc
             </kbd>
             <X className="w-4 h-4" />

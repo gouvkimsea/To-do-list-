@@ -43,7 +43,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
   const rowIndices = [0, 1, 2, 3, 4, 5]; // rows 2..7 in spreadsheet (row 1 is header)
 
   return (
-    <div className="bg-white rounded-2xl border border-[#DFD8CE] shadow-[0_20px_50px_-12px_rgba(45,60,48,0.15)] overflow-hidden w-full mx-auto">
+    <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#DFD8CE] dark:border-[#38332E] shadow-[0_20px_50px_-12px_rgba(45,60,48,0.15)] overflow-hidden w-full mx-auto">
       {/* Green Spreadsheet Top Bar */}
       <div className="bg-[#238854] text-white px-4 sm:px-5 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
@@ -62,7 +62,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
           <button
             type="button"
             onClick={onExportCsv}
-            className="bg-white/15 hover:bg-white/25 text-white border border-white/30 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap"
+            className="bg-white/15 hover:bg-white/25 text-white border border-white/30 rounded-full px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer whitespace-nowrap touch-manipulation"
           >
             Export .CSV
           </button>
@@ -70,16 +70,22 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
       </div>
 
       {/* Spreadsheet Grid */}
-      <div className="p-3 sm:p-4 bg-white overflow-x-auto">
-        <table className="w-full min-w-[720px] border-collapse border border-[#E8E2D9] text-left select-none">
+      <div className="p-2 sm:p-4 bg-white dark:bg-[#1E1B18] overflow-x-auto touch-scroll-x">
+        {/* Mobile Swipe Hint */}
+        <div className="sm:hidden flex items-center justify-between text-[11px] text-[#8A8279] dark:text-[#9E968D] mb-1.5 px-0.5">
+          <span>← Swipe horizontally to view all 7 days →</span>
+          <span className="font-semibold tabular-nums">7 columns</span>
+        </div>
+
+        <table className="w-full min-w-[720px] border-collapse border border-[#E8E2D9] dark:border-[#38332E] text-left select-none">
           <thead>
             {/* Column Letters A..G */}
-            <tr className="bg-[#EFECE6] text-[#8E877E] text-[10px] font-bold">
-              <th className="w-8 py-1.5 text-center border border-[#E4DDD3]" />
+            <tr className="bg-[#EFECE6] dark:bg-[#2B2622] text-[#8E877E] dark:text-[#A7A097] text-[10px] font-bold">
+              <th className="w-8 py-1.5 text-center border border-[#E4DDD3] dark:border-[#38332E] sticky left-0 z-10 bg-[#EFECE6] dark:bg-[#2B2622]" />
               {COL_LETTERS.map((letter) => (
                 <th
                   key={letter}
-                  className="py-1.5 text-center border border-[#E4DDD3] w-[13.5%]"
+                  className="py-1.5 text-center border border-[#E4DDD3] dark:border-[#38332E] w-[13.5%]"
                 >
                   {letter}
                 </th>
@@ -88,7 +94,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
 
             {/* Row 1: MON..SUN Headers with % */}
             <tr>
-              <td className="bg-[#EFECE6] text-[#8E877E] text-[10px] font-bold text-center border border-[#E4DDD3] py-2">
+              <td className="sticky left-0 z-10 bg-[#EFECE6] dark:bg-[#2B2622] text-[#8E877E] dark:text-[#A7A097] text-[10px] font-bold text-center border border-[#E4DDD3] dark:border-[#38332E] py-2">
                 1
               </td>
               {columns.map((col, idx) => {
@@ -97,7 +103,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                   <th
                     key={col.id}
                     data-day-header="true"
-                    className="px-2.5 py-2 border border-[#E4DDD3] transition-colors"
+                    className="px-2.5 py-2 border border-[#E4DDD3] dark:border-[#38332E] transition-colors"
                     style={{ backgroundColor: theme.dayHeaders[idx] }}
                   >
                     <div className="flex items-center justify-between">
@@ -119,7 +125,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
               const sheetRowNumber = taskIdx + 2;
               return (
                 <tr key={sheetRowNumber} className="h-10">
-                  <td className="bg-[#EFECE6] text-[#8E877E] text-[10px] font-bold text-center border border-[#E4DDD3]">
+                  <td className="sticky left-0 z-10 bg-[#EFECE6] dark:bg-[#2B2622] text-[#8E877E] dark:text-[#A7A097] text-[10px] font-bold text-center border border-[#E4DDD3] dark:border-[#38332E]">
                     {sheetRowNumber}
                   </td>
                   {columns.map((col) => {
@@ -136,7 +142,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                     return (
                       <td
                         key={`${col.id}-${sheetRowNumber}`}
-                        className="px-2 py-1.5 border border-[#ECE7DF] hover:bg-[#FAF7F2] transition-colors"
+                        className="px-2 py-1.5 border border-[#ECE7DF] dark:border-[#332E2A] hover:bg-[#FAF7F2] dark:hover:bg-[#25211D] transition-colors"
                       >
                         {task && (
                           <div className="flex items-center justify-between gap-1">
@@ -144,6 +150,9 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                               type="text"
                               value={task.text}
                               placeholder=""
+                              autoCapitalize="sentences"
+                              autoCorrect="on"
+                              enterKeyHint="done"
                               aria-label={`Spreadsheet ${col.dayName} row ${sheetRowNumber}`}
                               onChange={(e) =>
                                 onUpdateDailyTaskText(
@@ -155,7 +164,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                               className={`w-full min-w-0 text-[10px] font-medium bg-transparent focus:outline-none truncate ${
                                 task.completed
                                   ? 'line-through text-[#A59E95]'
-                                  : 'text-[#4B453F]'
+                                  : 'text-[#4B453F] dark:text-[#E8E2D9]'
                               }`}
                             />
 
@@ -169,7 +178,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                                   data-testid={`spreadsheet-category-badge-${task.id}`}
                                   data-category-badge={task.category}
                                   title={`Category: ${task.category} (click to cycle)`}
-                                  className="px-1 py-0.5 rounded text-[7.5px] font-bold border leading-none cursor-pointer transition-transform active:scale-95"
+                                  className="px-1 py-0.5 rounded text-[7.5px] font-bold border leading-none cursor-pointer transition-transform active:scale-95 touch-manipulation"
                                   style={{
                                     backgroundColor:
                                       CATEGORY_BADGE_STYLES[task.category]
@@ -196,7 +205,7 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
                                       ? 'progress'
                                       : task.priority.toLowerCase()
                                   }
-                                  className="w-6 h-3.5 rounded-full shrink-0 transition-transform hover:scale-105 cursor-pointer"
+                                  className="w-6 h-3.5 rounded-full shrink-0 transition-transform hover:scale-105 cursor-pointer touch-manipulation"
                                   style={{ backgroundColor: pillColor }}
                                 />
                               </div>

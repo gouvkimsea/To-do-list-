@@ -81,7 +81,7 @@ export const ArchiveModal: React.FC<ArchiveModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-3 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="archive-modal-title"
@@ -92,9 +92,9 @@ export const ArchiveModal: React.FC<ArchiveModalProps> = ({
         }
       }}
     >
-      <div className="bg-[#FAF7F2] border border-[#E2D9CC] rounded-2xl max-w-2xl w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
+      <div className="bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#E2D9CC] dark:border-[#38332E] rounded-2xl max-w-2xl w-full max-h-[92dvh] sm:max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
         {/* Modal Top Chrome Bar */}
-        <div className="bg-[#EFEBE4] px-4 sm:px-5 py-3 border-b border-[#E2D9CC] flex items-center justify-between shrink-0">
+        <div className="bg-[#EFEBE4] dark:bg-[#28231E] px-3 sm:px-5 py-3 border-b border-[#E2D9CC] dark:border-[#38332E] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-3 h-3 rounded-full bg-[#ED6A5E] shrink-0" />
             <span className="w-3 h-3 rounded-full bg-[#F4BF4F] shrink-0" />
@@ -103,13 +103,13 @@ export const ArchiveModal: React.FC<ArchiveModalProps> = ({
               <Archive className="w-3.5 h-3.5 text-[#B05C37] shrink-0" />
               <h2
                 id="archive-modal-title"
-                className="text-xs sm:text-sm font-bold text-[#2F2B28] truncate"
+                className="text-xs sm:text-sm font-bold text-[#2F2B28] dark:text-[#EDE8E1] truncate"
               >
                 Completed Task Archive
               </h2>
               <span
                 data-testid="archive-modal-count-badge"
-                className="ml-1 px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-[#E5DEC9] text-[#4A433C] tabular-nums"
+                className="ml-1 px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-[#E5DEC9] dark:bg-[#38332E] text-[#4A433C] dark:text-[#EDE8E1] tabular-nums"
               >
                 {archivedTasks.length}
               </span>
@@ -121,9 +121,9 @@ export const ArchiveModal: React.FC<ArchiveModalProps> = ({
             onClick={onClose}
             aria-label="Close archive modal"
             data-testid="close-archive-modal-btn"
-            className="text-[#7A7269] hover:text-[#2F2B28] px-2 py-1 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold"
+            className="text-[#7A7269] hover:text-[#2F2B28] px-2 py-1 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1 text-xs font-semibold touch-manipulation min-h-[36px]"
           >
-            <kbd className="px-1.5 py-0.5 text-[10px] font-bold bg-white border border-[#D8CFC2] rounded text-[#5A534C]">
+            <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-bold bg-white dark:bg-[#2B2622] border border-[#D8CFC2] dark:border-[#423C35] rounded text-[#5A534C] dark:text-[#D5CFC7]">
               Esc
             </kbd>
             <X className="w-4 h-4" />
@@ -328,9 +328,9 @@ export const ArchiveModal: React.FC<ArchiveModalProps> = ({
                         aria-label={`Restore archived task "${item.text}"`}
                         data-testid={`restore-archived-task-${item.archiveId}`}
                         title="Restore task to active board"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#F4EFE6] hover:bg-[#EAE1D3] text-[#3B3530] text-[11px] font-bold transition-colors cursor-pointer"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#F4EFE6] hover:bg-[#EAE1D3] text-[#3B3530] text-[11px] font-bold transition-colors cursor-pointer touch-manipulation min-h-[36px]"
                       >
-                        <RotateCcw className="w-3 h-3 text-[#B05C37]" />
+                        <RotateCcw className="w-3.5 h-3.5 text-[#B05C37]" />
                         <span>Restore</span>
                       </button>
 
@@ -340,9 +340,9 @@ export const ArchiveModal: React.FC<ArchiveModalProps> = ({
                         aria-label={`Permanently delete archived task "${item.text}"`}
                         data-testid={`delete-archived-task-${item.archiveId}`}
                         title="Delete permanently from archive"
-                        className="p-1.5 rounded-lg text-[#9C9288] hover:text-[#9E3F38] hover:bg-[#FDECEB] transition-colors cursor-pointer"
+                        className="p-2 rounded-lg text-[#9C9288] hover:text-[#9E3F38] hover:bg-[#FDECEB] transition-colors cursor-pointer touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

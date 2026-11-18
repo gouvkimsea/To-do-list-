@@ -49,14 +49,14 @@ export const DashboardPage: React.FC<SharedDashboardPageProps> = ({
           className="w-full"
           defaultFullscreen
           chromeRightSlot={
-            <div className="inline-flex items-center bg-[#E5DED4] p-0.5 rounded-full">
+            <div className="inline-flex items-center bg-[#E5DED4] dark:bg-[#38332E] p-0.5 rounded-full">
               <button
                 type="button"
                 onClick={() => setChartTab('breakdown')}
-                className={`text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
+                className={`text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap touch-manipulation ${
                   chartTab === 'breakdown'
-                    ? 'bg-white text-[#2F2B28] shadow-xs'
-                    : 'text-[#6E665E] hover:text-[#2F2B28]'
+                    ? 'bg-white dark:bg-[#25211D] text-[#2F2B28] dark:text-[#EDE8E1] shadow-xs'
+                    : 'text-[#6E665E] dark:text-[#A7A097] hover:text-[#2F2B28]'
                 }`}
               >
                 Live Breakdown
@@ -64,10 +64,10 @@ export const DashboardPage: React.FC<SharedDashboardPageProps> = ({
               <button
                 type="button"
                 onClick={() => setChartTab('trends')}
-                className={`text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap ${
+                className={`text-[10px] sm:text-[11px] font-bold px-2.5 sm:px-3 py-1 rounded-full transition-all cursor-pointer whitespace-nowrap touch-manipulation ${
                   chartTab === 'trends'
-                    ? 'bg-white text-[#2F2B28] shadow-xs'
-                    : 'text-[#6E665E] hover:text-[#2F2B28]'
+                    ? 'bg-white dark:bg-[#25211D] text-[#2F2B28] dark:text-[#EDE8E1] shadow-xs'
+                    : 'text-[#6E665E] dark:text-[#A7A097] hover:text-[#2F2B28]'
                 }`}
               >
                 4-Week Trends

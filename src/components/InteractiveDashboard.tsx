@@ -12,6 +12,9 @@ import {
   Archive,
   Plus,
   Repeat,
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
 } from 'lucide-react';
 import {
   DndContext,
@@ -310,7 +313,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
           }}
           className={`${
             compact ? 'w-3 h-3 rounded-[3px]' : 'w-4 h-4 rounded-[4px]'
-          } flex items-center justify-center shrink-0 transition-colors cursor-pointer`}
+          } flex items-center justify-center shrink-0 transition-colors cursor-pointer touch-manipulation relative after:absolute after:-inset-1.5 after:content-['']`}
           style={{
             backgroundColor: task.completed ? checkboxBg : '#FAF8F5',
             border: task.completed ? 'none' : '1.5px solid #D7D0C6',
@@ -337,7 +340,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
           data-priority-dot={task.priority}
           className={`${
             compact ? 'w-1.5 h-1.5' : 'w-2 h-2'
-          } rounded-full shrink-0 transition-transform hover:scale-125 cursor-pointer`}
+          } rounded-full shrink-0 transition-transform hover:scale-125 cursor-pointer touch-manipulation relative after:absolute after:-inset-2 after:content-['']`}
           style={{
             backgroundColor: isBlank
               ? '#E8D5B7'
@@ -350,6 +353,9 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
           type="text"
           value={task.text}
           placeholder="—"
+          autoCapitalize="sentences"
+          autoCorrect="on"
+          enterKeyHint="done"
           data-task-input={`${instancePrefix}-${dayId}-${idx}`}
           data-testid={`${instancePrefix}-task-name-${task.id}`}
           aria-label={`${dayName} task ${idx + 1} description (${instancePrefix})`}
@@ -418,7 +424,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
             data-testid={`${instancePrefix}-category-badge-${task.id}`}
             data-category-badge={task.category}
             title={`Category: ${task.category} (click to cycle)`}
-            className={`rounded font-bold tracking-tight shrink-0 leading-none border transition-transform active:scale-95 cursor-pointer ${
+            className={`rounded font-bold tracking-tight shrink-0 leading-none border transition-transform active:scale-95 cursor-pointer touch-manipulation ${
               compact
                 ? 'px-1 py-0.5 text-[7px]'
                 : 'px-1.5 py-0.5 text-[8.5px]'
@@ -456,7 +462,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
                 ? RECURRING_CONFIG[task.recurring].label
                 : 'No repeat (click to cycle)'
             }`}
-            className={`rounded font-bold tracking-tight shrink-0 inline-flex items-center gap-0.5 border transition-all active:scale-95 cursor-pointer leading-none ${
+            className={`rounded font-bold tracking-tight shrink-0 inline-flex items-center gap-0.5 border transition-all active:scale-95 cursor-pointer leading-none touch-manipulation ${
               compact
                 ? 'px-1 py-0.5 text-[7px]'
                 : 'px-1.5 py-0.5 text-[8.5px]'
@@ -523,7 +529,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
                   })`
                 : 'Expand to add task notes or context'
             }
-            className={`relative w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+            className={`relative w-5 h-5 rounded flex items-center justify-center shrink-0 transition-colors cursor-pointer touch-manipulation ${
               isNotesExpanded || hasNotes
                 ? 'text-[#B86B43] bg-[#F6ECE3] hover:bg-[#EFE0D3]'
                 : 'text-[#C2B9AF] hover:text-[#6E655F] hover:bg-[#F4EFE8]'
@@ -547,7 +553,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
             aria-label={`Archive completed ${dayName} task "${task.text}" (${instancePrefix})`}
             data-testid={`${instancePrefix}-archive-task-${task.id}`}
             title="Move completed task to Archive"
-            className="w-5 h-5 rounded flex items-center justify-center shrink-0 text-[#B8AFA6] hover:text-[#B05C37] hover:bg-[#F4EFE8] transition-colors cursor-pointer"
+            className="w-5 h-5 rounded flex items-center justify-center shrink-0 text-[#B8AFA6] hover:text-[#B05C37] hover:bg-[#F4EFE8] transition-colors cursor-pointer touch-manipulation"
           >
             <Archive className="w-3 h-3" />
           </button>
@@ -916,6 +922,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
   const [activeTagFilter, setActiveTagFilter] = useState<'All' | TaskCategory>(
     'All'
   );
+  const [mobileDayFilter, setMobileDayFilter] = useState<string | 'all'>('all');
   const [quickAddValues, setQuickAddValues] = useState<Record<string, string>>(
     {}
   );
@@ -1669,9 +1676,9 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
           data-testid={`${instancePrefix}-tag-filter-bar`}
           role="group"
           aria-label={`Filter tasks by tag (${instancePrefix})`}
-          className="flex flex-wrap items-center gap-1.5 mb-2.5"
+          className="flex items-center gap-1.5 mb-2.5 overflow-x-auto no-scrollbar touch-scroll-x flex-nowrap py-0.5 sm:flex-wrap"
         >
-          <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] mr-0.5">
+          <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] mr-0.5 shrink-0">
             TAGS
           </span>
           <button
@@ -1679,7 +1686,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
             onClick={() => setActiveTagFilter('All')}
             aria-pressed={activeTagFilter === 'All'}
             data-testid={`${instancePrefix}-tag-filter-All`}
-            className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums ${
+            className={`px-2 py-1 rounded text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums touch-manipulation ${
               activeTagFilter === 'All'
                 ? 'bg-[#2F2B28] text-white border-[#2F2B28] shadow-2xs'
                 : 'bg-white text-[#5A534C] border-[#DED8CE] hover:bg-[#F3EFE9]'
@@ -1704,7 +1711,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                 title={`Filter by ${cat} tag (${count} task${
                   count === 1 ? '' : 's'
                 })`}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums ${
+                className={`px-2 py-1 rounded text-[10px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums touch-manipulation ${
                   isSelected
                     ? 'ring-2 ring-[#2F2B28]/45 scale-105 shadow-2xs'
                     : 'opacity-85 hover:opacity-100'
@@ -1724,7 +1731,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
               type="button"
               onClick={() => setActiveTagFilter('All')}
               data-testid={`${instancePrefix}-tag-filter-reset`}
-              className="text-[10px] font-semibold text-[#8A8279] hover:text-[#2F2B28] underline ml-1 cursor-pointer whitespace-nowrap shrink-0"
+              className="text-[10px] font-semibold text-[#8A8279] hover:text-[#2F2B28] underline ml-1 cursor-pointer whitespace-nowrap shrink-0 touch-manipulation"
             >
               Show all
             </button>
@@ -1777,6 +1784,113 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       Clear search
                     </button>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Day Selector Ribbon (<sm viewports) */}
+            {!compact && (
+              <div
+                className="sm:hidden mb-2.5 bg-white dark:bg-[#1E1B18] p-1.5 rounded-xl border border-[#EAE4DC] dark:border-[#38332E] shadow-2xs"
+                data-testid={`${instancePrefix}-mobile-day-selector`}
+              >
+                <div className="flex items-center justify-between mb-1.5 px-1">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#C87D55]" />
+                    <span className="text-[11px] font-bold text-[#2F2B28] dark:text-[#EDE8E1]">
+                      {mobileDayFilter === 'all'
+                        ? 'All 7 Days'
+                        : displayedColumns.find((c) => c.id === mobileDayFilter)?.dayName ?? 'Day View'}
+                    </span>
+                    {mobileDayFilter !== 'all' && (
+                      <span className="text-[10px] text-[#8A8279] dark:text-[#9E968D]">
+                        ({displayedColumns.find((c) => c.id === mobileDayFilter)?.dateLabel})
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Previous / Next Day Steppers */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (displayedColumns.length === 0) return;
+                        if (mobileDayFilter === 'all') {
+                          setMobileDayFilter(displayedColumns[0].id);
+                        } else {
+                          const curIdx = displayedColumns.findIndex((c) => c.id === mobileDayFilter);
+                          const prevIdx = curIdx > 0 ? curIdx - 1 : displayedColumns.length - 1;
+                          setMobileDayFilter(displayedColumns[prevIdx].id);
+                        }
+                      }}
+                      aria-label="Previous day"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#FAF7F2] dark:bg-[#2B2622] text-[#5A534C] dark:text-[#D5CFC7] border border-[#E0D9CE] dark:border-[#423C35] hover:bg-[#F0EAE1] cursor-pointer touch-manipulation active:scale-95"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (displayedColumns.length === 0) return;
+                        if (mobileDayFilter === 'all') {
+                          setMobileDayFilter(displayedColumns[0].id);
+                        } else {
+                          const curIdx = displayedColumns.findIndex((c) => c.id === mobileDayFilter);
+                          const nextIdx = curIdx < displayedColumns.length - 1 ? curIdx + 1 : 0;
+                          setMobileDayFilter(displayedColumns[nextIdx].id);
+                        }
+                      }}
+                      aria-label="Next day"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#FAF7F2] dark:bg-[#2B2622] text-[#5A534C] dark:text-[#D5CFC7] border border-[#E0D9CE] dark:border-[#423C35] hover:bg-[#F0EAE1] cursor-pointer touch-manipulation active:scale-95"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Day Pills Ribbon */}
+                <div className="flex items-center gap-1 overflow-x-auto no-scrollbar touch-scroll-x py-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setMobileDayFilter('all')}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer shrink-0 touch-manipulation ${
+                      mobileDayFilter === 'all'
+                        ? 'bg-[#2F2B28] text-white border-[#2F2B28] dark:bg-[#C87D55] dark:border-[#C87D55]'
+                        : 'bg-[#FAF8F5] dark:bg-[#27221E] text-[#5A534C] dark:text-[#C5BFB6] border-[#E5DFD5] dark:border-[#38332E]'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {displayedColumns.map((col) => {
+                    const isSelected = mobileDayFilter === col.id;
+                    const progress = calculateDayProgress(col.tasks);
+                    const isDone = progress.total > 0 && progress.completed === progress.total;
+                    return (
+                      <button
+                        key={col.id}
+                        type="button"
+                        onClick={() => setMobileDayFilter(col.id)}
+                        className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1 touch-manipulation ${
+                          isSelected
+                            ? 'bg-[#2F2B28] text-white border-[#2F2B28] dark:bg-[#C87D55] dark:border-[#C87D55]'
+                            : 'bg-[#FAF8F5] dark:bg-[#27221E] text-[#5A534C] dark:text-[#C5BFB6] border-[#E5DFD5] dark:border-[#38332E]'
+                        }`}
+                      >
+                        <span>{col.dayName.slice(0, 3)}</span>
+                        <span
+                          className={`text-[9px] px-1 py-0.2 rounded-full font-semibold ${
+                            isSelected
+                              ? 'bg-white/20 text-white'
+                              : isDone
+                              ? 'bg-[#E3EFE3] text-[#2F6B38] dark:bg-[#203624] dark:text-[#7FD48C]'
+                              : 'bg-[#EFECE6] dark:bg-[#38332E] text-[#7A7269] dark:text-[#A7A097]'
+                          }`}
+                        >
+                          {progress.completed}/{progress.total}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1850,11 +1964,17 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
               const dayAllDone = isDayAllDone(originalColumn.tasks);
               const isTargetColumn =
                 overDayId === col.id && activeDragTask !== null;
+              const isHiddenOnMobile =
+                !compact &&
+                mobileDayFilter !== 'all' &&
+                mobileDayFilter !== col.id;
 
               return (
                 <div
                   key={col.id}
                   className={`bg-white rounded-xl border flex flex-col overflow-visible transition-all duration-200 shadow-[0_2px_6px_rgba(0,0,0,0.02)] ${
+                    isHiddenOnMobile ? 'hidden sm:flex' : 'flex'
+                  } ${
                     isTargetColumn
                       ? 'border-[#C87D55] ring-2 ring-[#C87D55]/30 shadow-md scale-[1.01]'
                       : 'border-[#EAE4DC]'
@@ -2001,18 +2121,28 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       compact ? 'px-1.5 py-1' : 'px-2 py-1.5'
                     } rounded-b-xl bg-[#FAF7F2] border-t border-[#ECE7DF] flex items-center gap-1`}
                   >
-                    <Plus
-                      aria-hidden="true"
-                      className={`${
-                        compact ? 'w-2.5 h-2.5' : 'w-3 h-3'
-                      } text-[#9C948B] shrink-0`}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => handleQuickAddSubmit(col.id)}
+                      aria-label={`Submit quick add task to ${col.dayName}`}
+                      className="p-1 -m-1 text-[#9C948B] hover:text-[#C87D55] transition-colors cursor-pointer touch-manipulation flex items-center justify-center shrink-0"
+                    >
+                      <Plus
+                        aria-hidden="true"
+                        className={`${
+                          compact ? 'w-2.5 h-2.5' : 'w-3 h-3'
+                        } shrink-0`}
+                      />
+                    </button>
                     <input
                       type="text"
                       value={quickAddValues[col.id] ?? ''}
                       placeholder={
                         compact ? 'Add task…' : 'Add task… (Enter)'
                       }
+                      autoCapitalize="sentences"
+                      autoCorrect="on"
+                      enterKeyHint="done"
                       aria-label={`Quick add task to ${col.dayName} (${instancePrefix})`}
                       data-testid={`${instancePrefix}-quick-add-input-${col.id}`}
                       data-quick-add-input={`${instancePrefix}-${col.id}`}

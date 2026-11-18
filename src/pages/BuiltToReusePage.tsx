@@ -27,22 +27,22 @@ export const BuiltToReusePage: React.FC<SharedDashboardPageProps> = ({
               title="USE IT FOREVER"
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto w-full mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto w-full mt-4 sm:mt-6">
               {/* Card 1: Four views in one */}
               <RouterLink
                 to="/monthly-yearly"
                 onNavigate={onNavigate}
-                className="block bg-white hover:bg-[#FDFBF8] rounded-2xl border border-[#EDE6DC] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-7 text-center transition-transform hover:-translate-y-0.5 cursor-pointer"
+                className="block bg-white dark:bg-[#1E1B18] hover:bg-[#FDFBF8] dark:hover:bg-[#25211D] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-5 sm:p-7 text-center transition-transform hover:-translate-y-0.5 cursor-pointer touch-manipulation"
               >
-                <div className="w-16 h-16 rounded-full bg-[#F5E0D2] flex items-center justify-center gap-1 mx-auto mb-4">
+                <div className="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-[#F5E0D2] dark:bg-[#3D2C24] flex items-center justify-center gap-1 mx-auto mb-3 sm:mb-4">
                   <span className="w-3.5 h-5 rounded-[3px] bg-[#E2A88C]" />
                   <span className="w-3.5 h-5 rounded-[3px] bg-[#A9C5A0]" />
                   <span className="w-3.5 h-5 rounded-[3px] bg-[#94B4C8]" />
                 </div>
-                <h2 className="font-bold text-base sm:text-lg text-[#2F2B28] mb-1.5">
+                <h2 className="font-bold text-base sm:text-lg text-[#2F2B28] dark:text-[#EDE8E1] mb-1.5">
                   Four views in one
                 </h2>
-                <p className="text-xs sm:text-sm font-medium text-[#8A8279] leading-relaxed">
+                <p className="text-xs sm:text-sm font-medium text-[#8A8279] dark:text-[#9E968D] leading-relaxed">
                   Weekly, Monthly &amp;
                   <br />
                   Yearly — all included
@@ -53,15 +53,15 @@ export const BuiltToReusePage: React.FC<SharedDashboardPageProps> = ({
               <button
                 type="button"
                 onClick={onResetWeek}
-                className="bg-white hover:bg-[#FDFBF8] rounded-2xl border border-[#EDE6DC] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-7 text-center transition-transform hover:-translate-y-0.5 cursor-pointer"
+                className="bg-white dark:bg-[#1E1B18] hover:bg-[#FDFBF8] dark:hover:bg-[#25211D] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-5 sm:p-7 text-center transition-transform hover:-translate-y-0.5 cursor-pointer touch-manipulation"
               >
-                <div className="w-16 h-16 rounded-full bg-[#DFECE0] text-[#4C7C57] flex items-center justify-center mx-auto mb-4">
-                  <RotateCcw className="w-7 h-7 stroke-[2.2]" />
+                <div className="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-[#DFECE0] dark:bg-[#243628] text-[#4C7C57] dark:text-[#7FD48C] flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <RotateCcw className="w-6 sm:w-7 h-6 sm:h-7 stroke-[2.2]" />
                 </div>
-                <h2 className="font-bold text-base sm:text-lg text-[#2F2B28] mb-1.5">
+                <h2 className="font-bold text-base sm:text-lg text-[#2F2B28] dark:text-[#EDE8E1] mb-1.5">
                   Reset to blank
                 </h2>
-                <p className="text-xs sm:text-sm font-medium text-[#8A8279] leading-relaxed">
+                <p className="text-xs sm:text-sm font-medium text-[#8A8279] dark:text-[#9E968D] leading-relaxed">
                   Clear any page with
                   <br />
                   one click — layout stays
@@ -72,15 +72,15 @@ export const BuiltToReusePage: React.FC<SharedDashboardPageProps> = ({
               <RouterLink
                 to="/"
                 onNavigate={onNavigate}
-                className="block bg-white hover:bg-[#FDFBF8] rounded-2xl border border-[#EDE6DC] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-7 text-center transition-transform hover:-translate-y-0.5 cursor-pointer"
+                className="block bg-white dark:bg-[#1E1B18] hover:bg-[#FDFBF8] dark:hover:bg-[#25211D] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-5 sm:p-7 text-center transition-transform hover:-translate-y-0.5 cursor-pointer touch-manipulation"
               >
-                <div className="w-16 h-16 rounded-full bg-[#E6E2F3] text-[#6B5B9E] flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-7 h-7 stroke-[2.2]" />
+                <div className="w-14 sm:w-16 h-14 sm:h-16 rounded-full bg-[#E6E2F3] dark:bg-[#2F283D] text-[#6B5B9E] dark:text-[#B7A4E8] flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <Calendar className="w-6 sm:w-7 h-6 sm:h-7 stroke-[2.2]" />
                 </div>
-                <h2 className="font-bold text-base sm:text-lg text-[#2F2B28] mb-1.5">
+                <h2 className="font-bold text-base sm:text-lg text-[#2F2B28] dark:text-[#EDE8E1] mb-1.5">
                   No dated pages
                 </h2>
-                <p className="text-xs sm:text-sm font-medium text-[#8A8279] leading-relaxed">
+                <p className="text-xs sm:text-sm font-medium text-[#8A8279] dark:text-[#9E968D] leading-relaxed">
                   Reuse it week after
                   <br />
                   week — never expires

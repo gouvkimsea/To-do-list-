@@ -147,9 +147,9 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
           data-testid="dashboard-tag-filter-bar"
           role="group"
           aria-label="Filter focus tasks by tag"
-          className="flex flex-wrap items-center gap-1.5 pb-2 mb-1 px-1 border-b border-[#F4F0E8]"
+          className="flex items-center gap-1.5 pb-2 mb-1 px-1 border-b border-[#F4F0E8] dark:border-[#38332E] overflow-x-auto no-scrollbar touch-scroll-x flex-nowrap sm:flex-wrap"
         >
-          <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#8A8279] mr-0.5">
+          <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#8A8279] mr-0.5 shrink-0">
             TAGS
           </span>
           <button
@@ -157,7 +157,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
             onClick={() => setActiveTagFilter('All')}
             aria-pressed={activeTagFilter === 'All'}
             data-testid="dashboard-tag-filter-All"
-            className={`px-2 py-0.5 rounded text-[9.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums ${
+            className={`px-2 py-1 rounded text-[9.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums touch-manipulation ${
               activeTagFilter === 'All'
                 ? 'bg-[#2F2B28] text-white border-[#2F2B28] shadow-2xs'
                 : 'bg-[#FAF7F2] text-[#5A534C] border-[#DED8CE] hover:bg-[#EFECE6]'
@@ -182,7 +182,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                 title={`Filter by ${cat} tag (${count} task${
                   count === 1 ? '' : 's'
                 })`}
-                className={`px-2 py-0.5 rounded text-[9.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums ${
+                className={`px-2 py-1 rounded text-[9.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums touch-manipulation ${
                   isSelected
                     ? 'ring-2 ring-[#2F2B28]/45 scale-105 shadow-2xs'
                     : 'opacity-85 hover:opacity-100'
@@ -202,7 +202,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
               type="button"
               onClick={() => setActiveTagFilter('All')}
               data-testid="dashboard-tag-filter-reset"
-              className="text-[9.5px] font-semibold text-[#8A8279] hover:text-[#2F2B28] underline ml-1 cursor-pointer whitespace-nowrap shrink-0"
+              className="text-[9.5px] font-semibold text-[#8A8279] hover:text-[#2F2B28] underline ml-1 cursor-pointer whitespace-nowrap shrink-0 touch-manipulation"
             >
               Show all
             </button>
@@ -256,7 +256,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                       aria-checked={task.completed}
                       aria-label={`Detailed task "${task.text}"`}
                       onClick={() => onToggleDetailedTask(task.id)}
-                      className="w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                      className="w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors cursor-pointer touch-manipulation relative after:absolute after:-inset-1.5 after:content-['']"
                       style={{
                         backgroundColor: task.completed
                           ? theme.checkboxBg
@@ -273,6 +273,9 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                       type="text"
                       value={task.text}
                       aria-label={`Edit task ${task.text}`}
+                      autoCapitalize="sentences"
+                      autoCorrect="on"
+                      enterKeyHint="done"
                       onChange={(e) =>
                         onUpdateDetailedText(task.id, e.target.value)
                       }
@@ -292,7 +295,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                         data-testid={`detailed-category-badge-${task.id}`}
                         data-category-badge={task.category}
                         title={`Category: ${task.category} (click to cycle)`}
-                        className="px-2 py-0.5 rounded text-[9px] font-bold shrink-0 border cursor-pointer transition-transform active:scale-95 leading-none"
+                        className="px-2 py-0.5 rounded text-[9px] font-bold shrink-0 border cursor-pointer transition-transform active:scale-95 leading-none touch-manipulation"
                         style={{
                           backgroundColor:
                             CATEGORY_BADGE_STYLES[task.category]?.bg ?? '#FCEADE',
@@ -323,7 +326,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                       onClick={() => onCycleDetailedPriority(task.id)}
                       aria-label={`Priority ${task.priority} for ${task.text}. Click to cycle.`}
                       data-priority-pill={task.priority}
-                      className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 cursor-pointer transition-transform active:scale-95 min-w-[38px] sm:min-w-[44px] text-center"
+                      className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 cursor-pointer transition-transform active:scale-95 min-w-[38px] sm:min-w-[44px] text-center touch-manipulation"
                       style={{
                         backgroundColor: PRIORITY_PILL_STYLES[task.priority].bg,
                         color: PRIORITY_PILL_STYLES[task.priority].text,
@@ -338,7 +341,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                       onClick={() => onCycleDetailedStatus(task.id)}
                       aria-label={`Status ${task.status} for ${task.text}. Click to cycle.`}
                       data-status-pill={task.status}
-                      className="px-2 sm:px-3 py-0.5 rounded-full text-[10px] font-bold shrink-0 cursor-pointer transition-transform active:scale-95 min-w-[56px] sm:min-w-[68px] text-center"
+                      className="px-2 sm:px-3 py-0.5 rounded-full text-[10px] font-bold shrink-0 cursor-pointer transition-transform active:scale-95 min-w-[56px] sm:min-w-[68px] text-center touch-manipulation"
                       style={{
                         backgroundColor: STATUS_PILL_STYLES[task.status].bg,
                         color: STATUS_PILL_STYLES[task.status].text,
@@ -355,7 +358,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                         aria-label={`Archive completed task "${task.text}"`}
                         data-testid={`archive-detailed-task-${task.id}`}
                         title="Move completed task to Archive"
-                        className="p-1 rounded text-[#9C948B] hover:text-[#B05C37] hover:bg-[#F4EFE6] transition-colors cursor-pointer shrink-0"
+                        className="p-1 rounded text-[#9C948B] hover:text-[#B05C37] hover:bg-[#F4EFE6] transition-colors cursor-pointer shrink-0 touch-manipulation"
                       >
                         <Archive className="w-3.5 h-3.5" />
                       </button>

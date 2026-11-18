@@ -124,7 +124,7 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
             ? 'Listening... Click to stop'
             : 'Dictate task with voice'
         }
-        className={`rounded-md flex items-center justify-center transition-colors cursor-pointer ${
+        className={`rounded-md flex items-center justify-center transition-colors cursor-pointer touch-manipulation ${
           compact ? 'w-3.5 h-3.5 p-0.5' : 'w-5 h-5 p-0.5'
         } ${
           showPopover || isListening

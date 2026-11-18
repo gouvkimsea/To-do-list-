@@ -95,12 +95,12 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
           />
 
           {/* 4 Interactive Action Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-3 sm:px-4 pb-3 pt-2 border-t border-[#ECE7DF]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 px-3 sm:px-4 pb-3 pt-2 border-t border-[#ECE7DF] dark:border-[#38332E]">
             {/* Card 1: Check it off */}
             <button
               type="button"
               onClick={() => setDemoChecked((c) => !c)}
-              className="bg-white hover:bg-[#FDFBF8] rounded-2xl border border-[#EDE6DC] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5"
+              className="bg-white dark:bg-[#1E1B18] hover:bg-[#FDFBF8] dark:hover:bg-[#25211D] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5 touch-manipulation"
             >
               <div className="flex items-center justify-center shrink-0">
                 <span
@@ -117,10 +117,10 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
                 </span>
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28]">
+                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28] dark:text-[#EDE8E1]">
                   Check it off
                 </h3>
-                <p className="text-xs font-medium text-[#8A8279]">
+                <p className="text-xs font-medium text-[#8A8279] dark:text-[#9E968D]">
                   Strikes through &amp; turns {demoChecked ? 'complete' : 'green'}
                 </p>
               </div>
@@ -130,7 +130,7 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
             <button
               type="button"
               onClick={() => setDemoPriority((p) => cyclePriority(p))}
-              className="bg-white hover:bg-[#FDFBF8] rounded-2xl border border-[#EDE6DC] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5"
+              className="bg-white dark:bg-[#1E1B18] hover:bg-[#FDFBF8] dark:hover:bg-[#25211D] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5 touch-manipulation"
             >
               <div className="flex items-center justify-center gap-1.5 shrink-0">
                 {(['High', 'Med', 'Low'] as const).map((p) => (
@@ -146,10 +146,10 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
                 ))}
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28]">
+                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28] dark:text-[#EDE8E1]">
                   Tap the dot
                 </h3>
-                <p className="text-xs font-medium text-[#8A8279]">
+                <p className="text-xs font-medium text-[#8A8279] dark:text-[#9E968D]">
                   Cycles High, Med &amp; Low ({demoPriority})
                 </p>
               </div>
@@ -160,7 +160,7 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
               type="button"
               data-testid="oneclick-demo-category-card"
               onClick={() => setDemoCategory((cat) => cycleCategory(cat))}
-              className="bg-white hover:bg-[#FDFBF8] rounded-2xl border border-[#EDE6DC] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5"
+              className="bg-white dark:bg-[#1E1B18] hover:bg-[#FDFBF8] dark:hover:bg-[#25211D] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5 touch-manipulation"
             >
               <div className="flex items-center justify-center shrink-0">
                 <span
@@ -176,10 +176,10 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
                 </span>
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28]">
+                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28] dark:text-[#EDE8E1]">
                   Tap the badge
                 </h3>
-                <p className="text-xs font-medium text-[#8A8279]">
+                <p className="text-xs font-medium text-[#8A8279] dark:text-[#9E968D]">
                   Toggles Work, Personal, Health ({demoCategory})
                 </p>
               </div>
@@ -189,7 +189,7 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
             <button
               type="button"
               onClick={() => setDemoStatus((s) => cycleStatus(s))}
-              className="bg-white hover:bg-[#FDFBF8] rounded-2xl border border-[#EDE6DC] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5"
+              className="bg-white dark:bg-[#1E1B18] hover:bg-[#FDFBF8] dark:hover:bg-[#25211D] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_10px_28px_-8px_rgba(68,53,39,0.08)] p-3.5 text-center transition-transform hover:-translate-y-0.5 cursor-pointer flex items-center justify-center gap-3.5 touch-manipulation"
             >
               <div className="flex items-center justify-center shrink-0">
                 <span
@@ -204,10 +204,10 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
                 </span>
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28]">
+                <h3 className="font-bold text-sm sm:text-base text-[#2F2B28] dark:text-[#EDE8E1]">
                   Tap the pill
                 </h3>
-                <p className="text-xs font-medium text-[#8A8279]">
+                <p className="text-xs font-medium text-[#8A8279] dark:text-[#9E968D]">
                   Sets To Do, In Progress, Done
                 </p>
               </div>

@@ -255,7 +255,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           data-testid={`${primaryTestIdPrefix}-mode-focus-btn`}
           aria-pressed={!isBreak}
           title="25-minute Focus work block"
-          className={`px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold transition-colors cursor-pointer whitespace-nowrap ${
+          className={`px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold transition-colors cursor-pointer whitespace-nowrap touch-manipulation ${
             !isBreak
               ? 'bg-white text-[#2F2B28] shadow-2xs'
               : 'text-[#7A7269] hover:text-[#2F2B28]'
@@ -269,7 +269,7 @@ export const PomodoroTimer: React.FC<PomodoroTimerProps> = ({
           data-testid={`${primaryTestIdPrefix}-mode-break-btn`}
           aria-pressed={isBreak}
           title="5-minute short break"
-          className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold transition-colors cursor-pointer whitespace-nowrap ${
+          className={`px-1.5 sm:px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold transition-colors cursor-pointer whitespace-nowrap touch-manipulation ${
             isBreak
               ? 'bg-white text-[#2F2B28] shadow-2xs'
               : 'text-[#7A7269] hover:text-[#2F2B28]'

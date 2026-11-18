@@ -126,7 +126,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-2 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="download-modal-title"
@@ -136,16 +136,16 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
         }
       }}
     >
-      <div className="bg-[#FAF7F2] border border-[#E2D9CC] rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#FAF7F2] dark:bg-[#1E1B18] border border-[#E2D9CC] dark:border-[#38332E] rounded-2xl max-w-xl w-full max-h-[92dvh] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Modal Top Bar */}
-        <div className="bg-[#EFEBE4] px-4 sm:px-5 py-3.5 border-b border-[#E2D9CC] flex items-center justify-between">
+        <div className="bg-[#EFEBE4] dark:bg-[#28231E] px-3 sm:px-5 py-3 border-b border-[#E2D9CC] dark:border-[#38332E] flex items-center justify-between">
           <div className="flex items-center gap-2 min-w-0">
             <span className="w-3 h-3 rounded-full bg-[#ED6A5E] shrink-0" />
             <span className="w-3 h-3 rounded-full bg-[#F4BF4F] shrink-0" />
             <span className="w-3 h-3 rounded-full bg-[#61C554] shrink-0" />
             <h2
               id="download-modal-title"
-              className="ml-1.5 sm:ml-2 text-xs font-bold text-[#4A433C] truncate"
+              className="ml-1.5 sm:ml-2 text-xs font-bold text-[#4A433C] dark:text-[#EDE8E1] truncate"
             >
               Interactive To-Do Dashboard Bundle &amp; Backup
             </h2>
@@ -155,7 +155,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close modal"
-            className="text-[#7A7269] hover:text-[#2F2B28] p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+            className="text-[#7A7269] hover:text-[#2F2B28] p-1.5 rounded-lg transition-colors cursor-pointer shrink-0 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
           >
             <X className="w-4 h-4" />
           </button>
@@ -165,17 +165,17 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
         <div
           role="tablist"
           aria-label="Download bundle options"
-          className="px-4 sm:px-6 pt-4 flex flex-wrap gap-2 border-b border-[#E8E2D8]"
+          className="px-3 sm:px-6 pt-3 flex flex-wrap gap-2 border-b border-[#E8E2D8] dark:border-[#38332E]"
         >
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'download'}
             onClick={() => setActiveTab('download')}
-            className={`pb-2.5 px-2.5 sm:px-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+            className={`pb-2.5 px-3 py-1 text-xs font-bold border-b-2 transition-colors cursor-pointer touch-manipulation ${
               activeTab === 'download'
-                ? 'border-[#C26D43] text-[#2F2B28]'
-                : 'border-transparent text-[#8A8279] hover:text-[#2F2B28]'
+                ? 'border-[#C26D43] text-[#2F2B28] dark:text-[#EDE8E1]'
+                : 'border-transparent text-[#8A8279] hover:text-[#2F2B28] dark:text-[#A7A097]'
             }`}
           >
             Instant Digital Download &amp; Backup
@@ -185,10 +185,10 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
             role="tab"
             aria-selected={activeTab === 'demo'}
             onClick={() => setActiveTab('demo')}
-            className={`pb-2.5 px-2.5 sm:px-3 text-xs font-bold border-b-2 transition-colors cursor-pointer ${
+            className={`pb-2.5 px-3 py-1 text-xs font-bold border-b-2 transition-colors cursor-pointer touch-manipulation ${
               activeTab === 'demo'
-                ? 'border-[#C26D43] text-[#2F2B28]'
-                : 'border-transparent text-[#8A8279] hover:text-[#2F2B28]'
+                ? 'border-[#C26D43] text-[#2F2B28] dark:text-[#EDE8E1]'
+                : 'border-transparent text-[#8A8279] hover:text-[#2F2B28] dark:text-[#A7A097]'
             }`}
           >
             Quick-Start &amp; Walkthrough

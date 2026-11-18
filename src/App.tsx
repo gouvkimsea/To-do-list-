@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Maximize2,
   Minimize2,
+  Menu,
   Moon,
   Search,
   Sun,
@@ -103,6 +104,7 @@ import { RouterLink } from './components/RouterLink';
 import { DownloadModal } from './components/DownloadModal';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { ArchiveModal } from './components/ArchiveModal';
+import { MobileNavDrawer } from './components/MobileNavDrawer';
 import { DashboardPage } from './pages/DashboardPage';
 import { HowItWorksPage } from './pages/HowItWorksPage';
 import { DailyColumnsPage } from './pages/DailyColumnsPage';
@@ -234,6 +236,8 @@ export default function App() {
   }>({ open: false, tab: 'download' });
   const [shortcutsModalOpen, setShortcutsModalOpen] = useState<boolean>(false);
   const [archiveModalOpen, setArchiveModalOpen] = useState<boolean>(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState<boolean>(false);
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() =>
     getSoundPreference()
   );
@@ -1520,7 +1524,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
+              {/* Desktop Right Controls (>=768px) */}
+              <div className="hidden md:flex items-center gap-1.5 shrink-0">
                 <button
                   type="button"
                   onClick={() => void handleEnterPresentationMode()}
@@ -1582,7 +1587,95 @@ export default function App() {
                   )}
                 </button>
               </div>
+
+              {/* Mobile Right Controls (<768px) with Touch Targets */}
+              <div className="flex md:hidden items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setMobileSearchOpen((prev) => !prev)}
+                  aria-label={mobileSearchOpen ? 'Close search' : 'Open search'}
+                  aria-expanded={mobileSearchOpen}
+                  data-testid="mobile-search-toggle"
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer touch-manipulation ${
+                    mobileSearchOpen || searchQuery.trim().length > 0
+                      ? 'bg-[#C26D43] text-white shadow-xs'
+                      : 'text-[#6E665E] hover:text-[#2F2B28] hover:bg-[#EFECE6]'
+                  }`}
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleToggleColorScheme}
+                  aria-label={
+                    colorScheme === 'dark'
+                      ? 'Switch to Light Mode'
+                      : 'Switch to Dark Mode'
+                  }
+                  data-testid="mobile-theme-toggle"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center text-[#6E665E] hover:text-[#2F2B28] hover:bg-[#EFECE6] cursor-pointer touch-manipulation"
+                >
+                  {colorScheme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-[#F4BF4F]" />
+                  ) : (
+                    <Moon className="w-4 h-4" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMobileNavOpen(true)}
+                  aria-label="Open mobile navigation menu"
+                  aria-expanded={mobileNavOpen}
+                  data-testid="mobile-menu-toggle"
+                  className="w-9 h-9 rounded-lg flex items-center justify-center bg-[#F2EFE9] text-[#2F2B28] border border-[#E2D9CC] cursor-pointer touch-manipulation"
+                >
+                  <Menu className="w-4 h-4" />
+                </button>
+              </div>
             </div>
+
+            {/* Expandable Mobile Search Bar */}
+            {mobileSearchOpen && (
+              <div
+                className="mt-2.5 pt-2 border-t border-[#EFECE6] md:hidden"
+                role="search"
+              >
+                <div className="relative w-full flex items-center">
+                  <Search
+                    className="w-3.5 h-3.5 text-[#8A8279] absolute left-3 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    autoFocus
+                    data-testid="mobile-header-search-input"
+                    onChange={(e) => setSearchQuery(sanitizeTaskText(e.target.value, 120))}
+                    placeholder="Search tasks, categories, notes..."
+                    aria-label="Mobile task search across all views"
+                    className="w-full bg-white border border-[#DDD5CB] focus:border-[#C87D55] focus:ring-2 focus:ring-[#C87D55]/20 rounded-full pl-8 pr-16 py-1.5 text-xs font-medium text-[#2F2B28] placeholder:text-[#9C948B] transition-all focus:outline-none shadow-2xs"
+                  />
+                  {searchQuery.trim().length > 0 && (
+                    <div className="absolute right-2 flex items-center gap-1">
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-[#FAF0E6] text-[#A85B33] tabular-nums">
+                        {globalMatchStats.totalMatches}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Clear mobile search"
+                        data-testid="mobile-header-search-clear"
+                        className="text-[#8A8279] hover:text-[#2F2B28] p-1 rounded-full cursor-pointer touch-manipulation"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </header>
         )}
 
@@ -1664,6 +1757,22 @@ export default function App() {
           activeTheme={activeTheme}
           weekRangeLabel={weekRangeLabel}
           onExportCsv={handleExportCsv}
+        />
+
+        <MobileNavDrawer
+          isOpen={mobileNavOpen}
+          currentPath={currentPath}
+          colorScheme={colorScheme}
+          soundEnabled={soundEnabled}
+          archivedCount={archivedTasks.length}
+          onClose={() => setMobileNavOpen(false)}
+          onNavigate={handleNavigate}
+          onToggleColorScheme={handleToggleColorScheme}
+          onToggleSound={handleToggleSound}
+          onOpenArchiveModal={() => setArchiveModalOpen(true)}
+          onOpenShortcutsModal={() => setShortcutsModalOpen(true)}
+          onOpenDownloadModal={() => setModalState({ open: true, tab: 'download' })}
+          onEnterFullscreen={() => void handleEnterPresentationMode()}
         />
       </div>
     </PomodoroProvider>

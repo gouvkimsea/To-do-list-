@@ -25,7 +25,7 @@ export const EverythingYouGetPage: React.FC<SharedDashboardPageProps> = ({
               title="EVERYTHING YOU GET"
             />
 
-            <div className="bg-white rounded-2xl border border-[#EDE6DC] shadow-[0_18px_45px_-12px_rgba(68,53,39,0.12)] px-6 sm:px-10 py-3 sm:py-4 divide-y divide-[#F2EFE9] max-w-4xl mx-auto w-full">
+            <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_18px_45px_-12px_rgba(68,53,39,0.12)] px-4 sm:px-10 py-3 sm:py-4 divide-y divide-[#F2EFE9] dark:divide-[#332E2A] max-w-4xl mx-auto w-full">
               {[
                 {
                   title: 'Interactive HTML dashboard',
@@ -54,16 +54,16 @@ export const EverythingYouGetPage: React.FC<SharedDashboardPageProps> = ({
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="py-3 sm:py-3.5 flex items-center gap-4"
+                  className="py-3 sm:py-3.5 flex items-center gap-3 sm:gap-4"
                 >
-                  <span className="w-8 h-8 rounded-full bg-[#DFECE0] text-[#3F7A4D] flex items-center justify-center shrink-0">
-                    <Check className="w-4 h-4 stroke-[3]" />
+                  <span className="w-7 sm:w-8 h-7 sm:h-8 rounded-full bg-[#DFECE0] dark:bg-[#243628] text-[#3F7A4D] dark:text-[#7FD48C] flex items-center justify-center shrink-0">
+                    <Check className="w-3.5 sm:w-4 h-3.5 sm:h-4 stroke-[3]" />
                   </span>
                   <div>
-                    <h3 className="font-bold text-sm sm:text-base text-[#2F2B28]">
+                    <h3 className="font-bold text-sm sm:text-base text-[#2F2B28] dark:text-[#EDE8E1]">
                       {item.title}
                     </h3>
-                    <p className="text-xs sm:text-sm font-medium text-[#8A8279]">
+                    <p className="text-xs sm:text-sm font-medium text-[#8A8279] dark:text-[#9E968D]">
                       {item.subtitle}
                     </p>
                   </div>
@@ -75,9 +75,9 @@ export const EverythingYouGetPage: React.FC<SharedDashboardPageProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenModal('download')}
-                className="bg-[#C26D43] hover:bg-[#AE5D35] text-white font-bold text-sm sm:text-base px-8 py-3.5 rounded-full shadow-[0_10px_25px_-5px_rgba(194,109,67,0.45)] inline-flex items-center gap-2.5 transition-all hover:scale-[1.02] cursor-pointer"
+                className="bg-[#C26D43] hover:bg-[#AE5D35] text-white font-bold text-xs sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-[0_10px_25px_-5px_rgba(194,109,67,0.45)] inline-flex items-center justify-center gap-2 sm:gap-2.5 transition-all hover:scale-[1.02] cursor-pointer touch-manipulation max-w-full text-center"
               >
-                <ArrowDown className="w-4 h-4 stroke-[2.5]" />
+                <ArrowDown className="w-4 h-4 stroke-[2.5] shrink-0" />
                 <span>Instant download &nbsp;·&nbsp; free lifetime updates</span>
               </button>
             </div>
