@@ -23,14 +23,29 @@ export const NotFoundPage: React.FC<NotFoundPageProps> = ({ onNavigate }) => {
         >
           <div className="p-4 sm:p-6 lg:p-8 flex-1 flex flex-col justify-center max-w-3xl mx-auto w-full text-center">
             <SectionHeader
-              eyebrow="404 · PAGE NOT FOUND"
+              eyebrow="ERROR CODE 404"
               italicSubtitle="looks like this page moved,"
-              title="LET'S GET YOU BACK ON TRACK"
+              title="404 · PAGE NOT FOUND"
             />
 
-            <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_18px_45px_-12px_rgba(68,53,39,0.12)] p-4 sm:p-8 mt-4 space-y-6">
-              <div className="w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-[#F5DFD0] dark:bg-[#3D2C24] text-[#B86741] dark:text-[#E2A88C] flex items-center justify-center mx-auto">
-                <Compass className="w-6 sm:w-7 h-6 sm:h-7 stroke-[2]" />
+            <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#EDE6DC] dark:border-[#38332E] shadow-[0_18px_45px_-12px_rgba(68,53,39,0.12)] p-6 sm:p-8 md:p-10 mt-4 space-y-6">
+              {/* Prominent Big 404 Display */}
+              <div className="flex flex-col items-center justify-center select-none relative my-2">
+                <div
+                  aria-hidden="true"
+                  className="absolute w-48 sm:w-72 h-28 sm:h-36 rounded-full bg-[#F5DFD0]/50 dark:bg-[#C26D43]/15 blur-2xl pointer-events-none"
+                />
+                <h2
+                  data-testid="big-404-number"
+                  className="relative font-serif-display font-black text-8xl sm:text-9xl md:text-[150px] lg:text-[180px] tracking-tight leading-none text-[#C26D43] dark:text-[#E2A88C] drop-shadow-sm select-none"
+                  aria-label="404 Error"
+                >
+                  404
+                </h2>
+                <div className="relative inline-flex items-center gap-2 mt-2 sm:mt-3 px-4 py-1.5 rounded-full bg-[#F5DFD0] dark:bg-[#3D2C24] text-[#B86741] dark:text-[#E2A88C] text-xs font-bold uppercase tracking-wider shadow-xs">
+                  <Compass className="w-4 h-4 stroke-[2.2]" />
+                  <span>Page Not Found</span>
+                </div>
               </div>
 
               <p className="text-xs sm:text-sm font-medium text-[#6E675F] dark:text-[#A7A097] max-w-md mx-auto leading-relaxed">
