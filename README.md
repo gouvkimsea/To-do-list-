@@ -55,7 +55,7 @@ Starts the local development server at `http://localhost:3000`.
 npm test
 ```
 
-Runs the test suite (96 unit tests) covering state management, audio synthesis, fullscreen APIs, Pomodoro logic, recurring tasks, undo/redo, and CSV exports.
+Runs the test suite (99 unit tests) covering state management, audio synthesis, fullscreen APIs, Pomodoro logic, recurring tasks, undo/redo, and CSV exports.
 
 ### Typecheck & Linting
 

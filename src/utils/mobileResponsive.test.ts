@@ -225,3 +225,25 @@ test('SpreadsheetSection provides horizontal touch scroll hint and sticky row he
     'SpreadsheetSection must support touch-scroll-x momentum scrolling'
   );
 });
+
+test('NotFoundPage renders prominent big 404 display and return navigation link', () => {
+  const notFoundPath = path.resolve(process.cwd(), 'src/pages/NotFoundPage.tsx');
+  const notFoundCode = fs.readFileSync(notFoundPath, 'utf8');
+
+  assert.ok(
+    notFoundCode.includes('data-testid="big-404-number"'),
+    'NotFoundPage must render data-testid="big-404-number"'
+  );
+  assert.ok(
+    notFoundCode.includes('404'),
+    'NotFoundPage must prominently render 404'
+  );
+  assert.ok(
+    notFoundCode.includes('Page Not Found'),
+    'NotFoundPage must render Page Not Found badge'
+  );
+  assert.ok(
+    notFoundCode.includes('to="/"'),
+    'NotFoundPage must contain link back to root dashboard'
+  );
+});
