@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BrowserFrame } from '../components/BrowserFrame';
 import { LiveProgressBoard } from '../components/LiveProgressSection';
-import { WeeklyProgressTrendsChart } from '../components/WeeklyProgressTrendsChart';
 import { RouterLink } from '../components/RouterLink';
 import { PomodoroTimer } from '../components/PomodoroTimer';
 import { SharedDashboardPageProps } from './types';
+
+const WeeklyProgressTrendsChart = lazy(
+  () => import('../components/WeeklyProgressTrendsChart')
+);
 
 export const DashboardPage: React.FC<SharedDashboardPageProps> = ({
   columns,
@@ -99,11 +102,19 @@ export const DashboardPage: React.FC<SharedDashboardPageProps> = ({
                 </span>
                 <PomodoroTimer instanceId="dashboard" />
               </div>
-              <WeeklyProgressTrendsChart
-                columns={columns}
-                selectedDate={selectedDate}
-                activeTheme={activeTheme}
-              />
+              <Suspense
+                fallback={
+                  <div className="h-64 flex items-center justify-center text-xs text-[#8A8279] dark:text-[#9A9187]">
+                    Loading trends chart...
+                  </div>
+                }
+              >
+                <WeeklyProgressTrendsChart
+                  columns={columns}
+                  selectedDate={selectedDate}
+                  activeTheme={activeTheme}
+                />
+              </Suspense>
             </div>
           )}
 

@@ -105,11 +105,11 @@ export const OneClickPage: React.FC<SharedDashboardPageProps> = ({
               <div className="flex items-center justify-center shrink-0">
                 <span
                   data-demo-checkbox={demoChecked ? 'true' : 'false'}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-                  style={{
-                    backgroundColor: demoChecked ? '#C87D55' : '#FAF8F5',
-                    border: demoChecked ? 'none' : '2px solid #D5CEC4',
-                  }}
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                    demoChecked
+                      ? 'bg-[#C87D55]'
+                      : 'bg-[#FAF8F5] dark:bg-[#2B2622] border-2 border-[#D5CEC4] dark:border-[#4A423A]'
+                  }`}
                 >
                   {demoChecked && (
                     <Check className="w-4 h-4 text-white stroke-[3]" />

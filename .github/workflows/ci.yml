@@ -32,3 +32,11 @@ jobs:
       - name: Build for production
         run: npm run build
 
+      - name: Verify build artifacts
+        run: |
+          test -f dist/index.html || exit 1
+          echo "Verified dist/index.html exists"
+
+      - name: Test Docker container build
+        run: docker build -t interactive-todo:test .
+

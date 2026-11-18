@@ -12,6 +12,7 @@ import {
   updateTaskStatus,
   calculateDayProgress,
   DailyTask,
+  DetailedTask,
   calculateDashboardMetrics,
   createInitialWeekColumns,
   createInitialDetailedTasks,
@@ -23,6 +24,7 @@ import {
   filterDetailedTasksByKeyword,
   countMatchingTasks,
   formatVoiceTranscript,
+  isSpeechRecognitionSupported,
   isDayAllDone,
   shouldTriggerDayCompleteConfetti,
   PAGE_ROUTES,
@@ -43,6 +45,8 @@ import {
   generateCsvExport,
   generateStandaloneHtmlExport,
   parsePersistedDashboardState,
+  isValidDashboardBackup,
+  parseDashboardBackup,
   cycleTheme,
   KEYBOARD_SHORTCUTS,
   resolveKeyboardShortcutAction,
@@ -65,6 +69,8 @@ import {
   RECURRING_CONFIG,
   RECURRING_INTERVALS,
   DETAILED_DAILY_TASK_LINKS,
+  findDetailedTaskLink,
+  findDailyTaskLink,
   archiveCompletedTasks,
   archiveSingleDailyTask,
   archiveSingleDetailedTask,
@@ -247,6 +253,19 @@ test('formatVoiceTranscript capitalizes dictated task for empty slot and appends
   assert.equal(
     formatVoiceTranscript('Write Q2 report', 'by Friday.'),
     'Write Q2 report by Friday'
+  );
+});
+
+test('isSpeechRecognitionSupported correctly checks window constructor existence', () => {
+  assert.equal(isSpeechRecognitionSupported(undefined), false);
+  assert.equal(isSpeechRecognitionSupported({}), false);
+  assert.equal(
+    isSpeechRecognitionSupported({ SpeechRecognition: class {} }),
+    true
+  );
+  assert.equal(
+    isSpeechRecognitionSupported({ webkitSpeechRecognition: class {} }),
+    true
   );
 });
 
@@ -457,6 +476,8 @@ test('sanitizeTaskText, sanitizeTaskNotes, and escapeHtml strip control chars an
     html.includes('&lt;img src=x onerror=&quot;alert(1)&quot;&gt;'),
     true
   );
+  assert.equal(html.includes('data-task-id="mon-1"'), true);
+  assert.equal(html.includes('my_tasks_html_state_v1'), true);
 });
 
 test('sanitizeCsvCell and generateCsvExport guard against CSV formula injection and escape quotes', () => {
@@ -837,6 +858,61 @@ test('syncDetailedTaskPriority and syncDailyTaskPriority keep priorities in sync
     syncedFromDaily.nextDetailedTasks.find((t) => t.id === 'dt-1')?.priority,
     'Low'
   );
+});
+
+test('dynamic task linking seamlessly syncs custom user tasks across views', () => {
+  const customColumns = createInitialWeekColumns();
+  // Attach a dynamic link to a new custom task on wednesday: wed-custom-1 -> dt-custom-1
+  customColumns[2].tasks.push({
+    id: 'wed-custom-1',
+    text: 'Custom launch checklist',
+    completed: false,
+    priority: 'Low',
+    status: 'To Do',
+    category: 'Work',
+    linkedDetailedTaskId: 'dt-custom-1',
+  });
+
+  const customDetailedTasks: DetailedTask[] = [
+    ...createInitialDetailedTasks(),
+    {
+      id: 'dt-custom-1',
+      text: 'Custom launch checklist',
+      completed: false,
+      priority: 'Low',
+      status: 'To Do',
+      category: 'Work',
+      linkedDailyTaskId: 'wed-custom-1',
+      linkedDayId: 'wed',
+    },
+  ];
+
+  // 1. Verify findDetailedTaskLink and findDailyTaskLink resolve the custom link
+  const linkFromDt = findDetailedTaskLink('dt-custom-1', customDetailedTasks, customColumns);
+  assert.equal(linkFromDt?.dayId, 'wed');
+  assert.equal(linkFromDt?.dailyTaskId, 'wed-custom-1');
+
+  const linkFromDaily = findDailyTaskLink('wed', 'wed-custom-1', customColumns, customDetailedTasks);
+  assert.equal(linkFromDaily?.detailedTaskId, 'dt-custom-1');
+
+  // 2. Toggle detailed task -> verify daily task completed in real time
+  const { nextDetailedTasks, nextColumns } = syncDetailedTaskToggle(
+    customDetailedTasks,
+    customColumns,
+    'dt-custom-1'
+  );
+  assert.equal(nextDetailedTasks.find((t) => t.id === 'dt-custom-1')?.completed, true);
+  assert.equal(nextColumns[2].tasks.find((t) => t.id === 'wed-custom-1')?.completed, true);
+
+  // 3. Toggle daily task back -> verify detailed task completed is false
+  const uncheckResult = syncDailyTaskToggle(
+    nextColumns,
+    nextDetailedTasks,
+    'wed',
+    'wed-custom-1'
+  );
+  assert.equal(uncheckResult.nextColumns[2].tasks.find((t) => t.id === 'wed-custom-1')?.completed, false);
+  assert.equal(uncheckResult.nextDetailedTasks.find((t) => t.id === 'dt-custom-1')?.completed, false);
 });
 
 test('archiveCompletedTasks moves completed tasks to archive list, declutters active board, and supports restoring', () => {
@@ -1643,3 +1719,47 @@ test('CSV cell sanitization strictly neutralizes spreadsheet formula injection p
   assert.equal(sanitizeCsvCell('\t=DDE(...)'), '"\'=DDE(...)"');
   assert.equal(sanitizeCsvCell('Normal task text'), '"Normal task text"');
 });
+
+test('isValidDashboardBackup and parseDashboardBackup strictly reject non-dashboard JSON to prevent data loss', () => {
+  // Reject null, primitives, and non-objects
+  assert.equal(isValidDashboardBackup(null), false);
+  assert.equal(isValidDashboardBackup('string'), false);
+  assert.equal(isValidDashboardBackup(123), false);
+
+  // Reject foreign or empty JSON (e.g., package.json or unrelated object)
+  assert.equal(isValidDashboardBackup({ name: 'package', version: '1.0.0' }), false);
+  assert.equal(isValidDashboardBackup({ columns: 'not-an-array' }), false);
+  assert.equal(isValidDashboardBackup({ columns: [] }), false);
+  assert.equal(isValidDashboardBackup({ columns: [{}, {}, {}, {}, {}, {}, {}] }), false);
+
+  // parseDashboardBackup throws descriptive errors on invalid payloads
+  assert.throws(
+    () => parseDashboardBackup('{"unrelated": true}'),
+    /Invalid backup format/
+  );
+  assert.throws(
+    () => parseDashboardBackup('broken json{'),
+    /Malformed JSON payload/
+  );
+  assert.throws(
+    () => parseDashboardBackup(''),
+    /Empty or invalid backup content/
+  );
+
+  // Valid backup payload passes and parses correctly
+  const validColumns = createInitialWeekColumns();
+  validColumns[0].tasks[0].text = 'Protected user task';
+  const validBackupJson = JSON.stringify({
+    columns: validColumns,
+    detailedTasks: createInitialDetailedTasks(),
+    monthlyGoals: createInitialMonthlyGoals(),
+    yearlyGoals: createInitialYearlyGoals(),
+    activeTheme: 'candy',
+  });
+
+  assert.equal(isValidDashboardBackup(JSON.parse(validBackupJson)), true);
+  const parsed = parseDashboardBackup(validBackupJson);
+  assert.equal(parsed.columns[0].tasks[0].text, 'Protected user task');
+  assert.equal(parsed.activeTheme, 'candy');
+});
+

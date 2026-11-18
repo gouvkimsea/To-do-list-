@@ -91,6 +91,14 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 2 * 1024 * 1024) {
+      setImportError('File size exceeds the 2MB limit for backups.');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       try {

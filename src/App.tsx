@@ -50,6 +50,7 @@ import {
   sanitizeTaskNotes,
   generateCsvExport,
   parsePersistedDashboardState,
+  parseDashboardBackup,
   resolveKeyboardShortcutAction,
   syncDetailedTaskToggle,
   syncDailyTaskToggle,
@@ -65,6 +66,8 @@ import {
   addQuickTaskToDayColumn,
   RecurringInterval,
   DETAILED_DAILY_TASK_LINKS,
+  findDetailedTaskLink,
+  findDailyTaskLink,
   ArchivedTask,
   archiveCompletedTasks,
   archiveSingleDailyTask,
@@ -179,44 +182,82 @@ export default function App() {
   const archivedTasks = taskSnapshot.archivedTasks;
 
   const setColumns = useCallback(
-    (action: DayColumn[] | ((prev: DayColumn[]) => DayColumn[])) => {
-      setTaskSnapshot((prev) => {
-        const nextCols = typeof action === 'function' ? action(prev.columns) : action;
-        return {
-          columns: nextCols,
-          detailedTasks: prev.detailedTasks,
-          archivedTasks: prev.archivedTasks,
-        };
-      });
+    (
+      action: DayColumn[] | ((prev: DayColumn[]) => DayColumn[]),
+      recordHistory = true
+    ) => {
+      setTaskSnapshot(
+        (prev) => {
+          const nextCols =
+            typeof action === 'function' ? action(prev.columns) : action;
+          return {
+            columns: nextCols,
+            detailedTasks: prev.detailedTasks,
+            archivedTasks: prev.archivedTasks,
+          };
+        },
+        recordHistory
+      );
     },
     [setTaskSnapshot]
   );
 
   const setDetailedTasks = useCallback(
-    (action: DetailedTask[] | ((prev: DetailedTask[]) => DetailedTask[])) => {
-      setTaskSnapshot((prev) => {
-        const nextDetailed =
-          typeof action === 'function' ? action(prev.detailedTasks) : action;
-        return {
-          columns: prev.columns,
-          detailedTasks: nextDetailed,
-          archivedTasks: prev.archivedTasks,
-        };
-      });
+    (
+      action: DetailedTask[] | ((prev: DetailedTask[]) => DetailedTask[]),
+      recordHistory = true
+    ) => {
+      setTaskSnapshot(
+        (prev) => {
+          const nextDetailed =
+            typeof action === 'function' ? action(prev.detailedTasks) : action;
+          return {
+            columns: prev.columns,
+            detailedTasks: nextDetailed,
+            archivedTasks: prev.archivedTasks,
+          };
+        },
+        recordHistory
+      );
     },
     [setTaskSnapshot]
   );
 
   const setBothTaskStates = useCallback(
-    (nextCols: DayColumn[], nextDetailed: DetailedTask[]) => {
-      setTaskSnapshot((prev) => ({
-        columns: nextCols,
-        detailedTasks: nextDetailed,
-        archivedTasks: prev.archivedTasks,
-      }));
+    (
+      nextCols: DayColumn[],
+      nextDetailed: DetailedTask[],
+      recordHistory = true
+    ) => {
+      setTaskSnapshot(
+        (prev) => ({
+          columns: nextCols,
+          detailedTasks: nextDetailed,
+          archivedTasks: prev.archivedTasks,
+        }),
+        recordHistory
+      );
     },
     [setTaskSnapshot]
   );
+
+  const isTypingBurstRef = useRef<boolean>(false);
+  const typingBurstTimerRef = useRef<number | null>(null);
+
+  const registerTypingBurst = useCallback(() => {
+    const isFirstKeystroke = !isTypingBurstRef.current;
+    isTypingBurstRef.current = true;
+
+    if (typingBurstTimerRef.current) {
+      window.clearTimeout(typingBurstTimerRef.current);
+    }
+    typingBurstTimerRef.current = window.setTimeout(() => {
+      isTypingBurstRef.current = false;
+      typingBurstTimerRef.current = null;
+    }, 800);
+
+    return isFirstKeystroke;
+  }, []);
   const [monthlyGoals, setMonthlyGoals] = useState<DetailedTask[]>(
     () => initialPersisted.monthlyGoals
   );
@@ -356,6 +397,34 @@ export default function App() {
     }
   }, [columns, detailedTasks, monthlyGoals, yearlyGoals, archivedTasks, activeTheme]);
 
+  // Cross-tab synchronization via native 'storage' events
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key !== STORAGE_KEY || !e.newValue) return;
+      try {
+        const nextState = parsePersistedDashboardState(e.newValue);
+        setTaskSnapshot(
+          {
+            columns: nextState.columns,
+            detailedTasks: nextState.detailedTasks,
+            archivedTasks: nextState.archivedTasks,
+          },
+          false // do not record into local tab undo history
+        );
+        setMonthlyGoals(nextState.monthlyGoals);
+        setYearlyGoals(nextState.yearlyGoals);
+        setActiveTheme(nextState.activeTheme);
+      } catch {
+        // ignore corrupted cross-tab payload
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [setTaskSnapshot]);
+
   const handleExplicitSave = useCallback(
     (customMessage?: string, shortcutBadge?: string) => {
       try {
@@ -403,12 +472,14 @@ export default function App() {
   );
 
   const handleUndo = useCallback(() => {
+    isTypingBurstRef.current = false;
     if (handleUndoRaw()) {
       handleExplicitSave('Undid task change (Ctrl+Z)');
     }
   }, [handleUndoRaw, handleExplicitSave]);
 
   const handleRedo = useCallback(() => {
+    isTypingBurstRef.current = false;
     if (handleRedoRaw()) {
       handleExplicitSave('Redid task change (Ctrl+Y)');
     }
@@ -934,6 +1005,7 @@ export default function App() {
     taskId: string,
     text: string
   ) => {
+    const recordHistory = registerTypingBurst();
     const { nextColumns, nextDetailedTasks } = syncDailyTaskText(
       columns,
       detailedTasks,
@@ -941,7 +1013,7 @@ export default function App() {
       taskId,
       text
     );
-    setBothTaskStates(nextColumns, nextDetailedTasks);
+    setBothTaskStates(nextColumns, nextDetailedTasks, recordHistory);
   };
 
   const handleQuickAddDailyTask = useCallback(
@@ -967,8 +1039,12 @@ export default function App() {
     taskId: string,
     notes: string
   ) => {
+    const recordHistory = registerTypingBurst();
     const cleanNotes = sanitizeTaskNotes(notes);
-    setColumns((prev) => updateDailyTaskNotes(prev, dayId, taskId, cleanNotes));
+    setColumns(
+      (prev) => updateDailyTaskNotes(prev, dayId, taskId, cleanNotes),
+      recordHistory
+    );
   };
 
   const handleReorderOrMoveDailyTask = (
@@ -1115,9 +1191,7 @@ export default function App() {
       taskId
     );
 
-    const link = DETAILED_DAILY_TASK_LINKS.find(
-      (l) => l.detailedTaskId === taskId
-    );
+    const link = findDetailedTaskLink(taskId, detailedTasks, columns);
     if (link) {
       const prevCol = columns.find((c) => c.id === link.dayId);
       const nextCol = nextColumns.find((c) => c.id === link.dayId);
@@ -1155,9 +1229,7 @@ export default function App() {
       nextStatus
     );
 
-    const link = DETAILED_DAILY_TASK_LINKS.find(
-      (l) => l.detailedTaskId === taskId
-    );
+    const link = findDetailedTaskLink(taskId, detailedTasks, columns);
     if (link) {
       const prevCol = columns.find((c) => c.id === link.dayId);
       const nextCol = nextColumns.find((c) => c.id === link.dayId);
@@ -1183,13 +1255,14 @@ export default function App() {
   };
 
   const handleUpdateDetailedText = (taskId: string, text: string) => {
+    const recordHistory = registerTypingBurst();
     const { nextDetailedTasks, nextColumns } = syncDetailedTaskText(
       detailedTasks,
       columns,
       taskId,
       text
     );
-    setBothTaskStates(nextColumns, nextDetailedTasks);
+    setBothTaskStates(nextColumns, nextDetailedTasks, recordHistory);
   };
 
   const handleToggleGoalTask = (mode: 'month' | 'year', taskId: string) => {
@@ -1313,7 +1386,7 @@ export default function App() {
   const handleImportJsonBackup = useCallback(
     (rawJsonString: string): boolean => {
       try {
-        const parsed = parsePersistedDashboardState(rawJsonString);
+        const parsed = parseDashboardBackup(rawJsonString);
         setTaskSnapshot({
           columns: parsed.columns,
           detailedTasks: parsed.detailedTasks,

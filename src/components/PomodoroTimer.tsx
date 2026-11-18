@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from 'react';
 import { Play, Pause, RotateCcw, Timer, CheckCircle2, Coffee } from 'lucide-react';
 import {
@@ -73,22 +74,48 @@ export const PomodoroProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [state.completedSessions]);
 
-  // 1-second interval tick while running
+  const lastTickRef = useRef<number>(Date.now());
+
+  // Timestamp-based tick while running, immune to background tab timer throttling
   useEffect(() => {
     if (state.status !== 'running') return;
 
-    const intervalId = window.setInterval(() => {
-      setState((prev) => {
-        const { nextState, didComplete } = tickPomodoro(prev, 1);
-        if (didComplete) {
-          playTaskCompletionDing();
-        }
-        return nextState;
-      });
-    }, 1000);
+    lastTickRef.current = Date.now();
+
+    const doTick = () => {
+      const now = Date.now();
+      const elapsedMs = now - lastTickRef.current;
+      if (elapsedMs >= 1000) {
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+        lastTickRef.current = now - (elapsedMs % 1000);
+        setState((prev) => {
+          if (prev.status !== 'running') return prev;
+          const { nextState, didComplete } = tickPomodoro(prev, elapsedSeconds);
+          if (didComplete) {
+            playTaskCompletionDing();
+          }
+          return nextState;
+        });
+      }
+    };
+
+    const intervalId = window.setInterval(doTick, 500);
+
+    const handleVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        doTick();
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
 
     return () => {
       window.clearInterval(intervalId);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
     };
   }, [state.status]);
 

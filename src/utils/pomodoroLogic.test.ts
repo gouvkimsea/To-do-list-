@@ -113,3 +113,23 @@ test('switchPomodoroMode switches between 25m focus and 5m short break', () => {
   assert.equal(focusState.mode, 'focus');
   assert.equal(focusState.secondsLeft, DEFAULT_POMODORO_SECONDS);
 });
+
+test('tickPomodoro accurately advances across large background tab deltas', () => {
+  const running = {
+    ...createInitialPomodoroState(0),
+    status: 'running' as const,
+    secondsLeft: 120,
+  };
+  // Simulate tab asleep for 45 seconds
+  const after45s = tickPomodoro(running, 45);
+  assert.equal(after45s.didComplete, false);
+  assert.equal(after45s.nextState.secondsLeft, 75);
+  assert.equal(after45s.nextState.status, 'running');
+
+  // Simulate tab asleep for remaining 100 seconds (overshooting 75s)
+  const completed = tickPomodoro(after45s.nextState, 100);
+  assert.equal(completed.didComplete, true);
+  assert.equal(completed.nextState.secondsLeft, 0);
+  assert.equal(completed.nextState.status, 'completed');
+  assert.equal(completed.nextState.completedSessions, 1);
+});

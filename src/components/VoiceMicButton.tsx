@@ -1,6 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { Mic, MicOff, Check, X } from 'lucide-react';
-import { formatVoiceTranscript } from '../utils/todoLogic';
+import {
+  formatVoiceTranscript,
+  isSpeechRecognitionSupported,
+} from '../utils/todoLogic';
 
 interface VoiceMicButtonProps {
   currentText: string;
@@ -27,6 +30,7 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
   const [showPopover, setShowPopover] = useState(false);
   const [dictationDraft, setDictationDraft] = useState('');
   const recognitionRef = useRef<any>(null);
+  const isSupported = useMemo(() => isSpeechRecognitionSupported(), []);
 
   useEffect(() => {
     return () => {
@@ -67,6 +71,10 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
     }
 
     setShowPopover(true);
+
+    if (!isSupported) {
+      return;
+    }
 
     const SpeechRecognitionCtor =
       (window as any).SpeechRecognition ||
@@ -148,10 +156,10 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
         <div
           role="dialog"
           aria-label="Voice dictation input"
-          className="absolute right-0 bottom-full mb-1.5 z-30 w-48 sm:w-56 max-w-[calc(100vw-2rem)] bg-white border border-[#E2DAD0] rounded-xl shadow-xl p-2.5 text-left"
+          className="absolute right-0 bottom-full mb-1.5 z-30 w-52 sm:w-60 max-w-[calc(100vw-2rem)] bg-white dark:bg-[#1E1B18] border border-[#E2DAD0] dark:border-[#38332E] rounded-xl shadow-xl p-2.5 text-left"
         >
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C623E] flex items-center gap-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#8C623E] dark:text-[#D4A373] flex items-center gap-1">
               <Mic className="w-3 h-3" />
               {isListening ? 'Listening now...' : 'Voice Dictation'}
             </span>
@@ -162,11 +170,17 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
                 setShowPopover(false);
               }}
               aria-label="Close voice dictation"
-              className="text-[#8A8279] hover:text-[#2F2B28] p-0.5 rounded cursor-pointer"
+              className="text-[#8A8279] hover:text-[#2F2B28] dark:hover:text-[#EDE8E1] p-0.5 rounded cursor-pointer"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
+
+          {!isSupported && (
+            <div className="mb-2 p-1.5 rounded-lg bg-[#FAF7F2] dark:bg-[#28231E] border border-[#EDE6DC] dark:border-[#38332E] text-[10px] text-[#7A7269] dark:text-[#B5ADA3] leading-snug">
+              Speech recognition is not supported in this browser (Chrome, Edge, or Safari recommended). You can still choose a quick phrase or type below:
+            </div>
+          )}
 
           <form
             onSubmit={(e) => {
@@ -181,10 +195,10 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
               type="text"
               value={dictationDraft}
               onChange={(e) => setDictationDraft(e.target.value)}
-              placeholder="Speak or type dictated task..."
+              placeholder={isSupported ? 'Speak or type dictated task...' : 'Type dictated task...'}
               aria-label="Dictated task phrase"
               autoFocus
-              className="flex-1 min-w-0 text-[11px] bg-[#FAF7F2] border border-[#DED8CE] rounded-lg px-2 py-1 text-[#2F2B28] focus:outline-none focus:border-[#C87D55]"
+              className="flex-1 min-w-0 text-[11px] bg-[#FAF7F2] dark:bg-[#28231E] border border-[#DED8CE] dark:border-[#38332E] rounded-lg px-2 py-1 text-[#2F2B28] dark:text-[#EDE8E1] focus:outline-none focus:border-[#C87D55]"
             />
             <button
               type="submit"
@@ -197,7 +211,7 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
           </form>
 
           <div className="space-y-1">
-            <span className="text-[9px] font-semibold text-[#9C948B] block">
+            <span className="text-[9px] font-semibold text-[#9C948B] dark:text-[#80776D] block">
               Quick voice phrases:
             </span>
             <div className="flex flex-wrap gap-1">
@@ -206,7 +220,7 @@ export const VoiceMicButton: React.FC<VoiceMicButtonProps> = ({
                   key={phrase}
                   type="button"
                   onClick={() => applyDictation(phrase)}
-                  className="text-[10px] bg-[#F5F1EB] hover:bg-[#EBE4DA] text-[#4A433C] px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer text-left truncate max-w-full"
+                  className="text-[10px] bg-[#F5F1EB] dark:bg-[#28231E] hover:bg-[#EBE4DA] dark:hover:bg-[#38332E] text-[#4A433C] dark:text-[#D5CEC4] px-2 py-0.5 rounded-md font-medium transition-colors cursor-pointer text-left truncate max-w-full"
                 >
                   {phrase}
                 </button>

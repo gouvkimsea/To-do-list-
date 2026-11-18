@@ -100,6 +100,7 @@ export interface DailyTask {
   category: TaskCategory;
   notes?: string;
   recurring?: RecurringInterval;
+  linkedDetailedTaskId?: string;
 }
 
 export interface DayColumn {
@@ -118,6 +119,8 @@ export interface DetailedTask {
   status: TaskStatus;
   category: TaskCategory;
   recurring?: RecurringInterval;
+  linkedDailyTaskId?: string;
+  linkedDayId?: string;
 }
 
 export interface ArchivedTask {
@@ -542,6 +545,77 @@ export const DETAILED_DAILY_TASK_LINKS: DetailedDailyTaskLink[] = [
   { detailedTaskId: 'dt-10', dayId: 'sun', dailyTaskId: 'sun-3' }, // Read new design book <-> Read new design book / Sun
 ];
 
+export function findDetailedTaskLink(
+  targetDetailedTaskId: string,
+  detailedTasks?: DetailedTask[],
+  columns?: DayColumn[]
+): DetailedDailyTaskLink | undefined {
+  if (detailedTasks) {
+    const dt = detailedTasks.find((t) => t.id === targetDetailedTaskId);
+    if (dt?.linkedDailyTaskId && dt?.linkedDayId) {
+      return {
+        detailedTaskId: targetDetailedTaskId,
+        dayId: dt.linkedDayId,
+        dailyTaskId: dt.linkedDailyTaskId,
+      };
+    }
+  }
+
+  if (columns) {
+    for (const col of columns) {
+      for (const t of col.tasks) {
+        if (t.linkedDetailedTaskId === targetDetailedTaskId) {
+          return {
+            detailedTaskId: targetDetailedTaskId,
+            dayId: col.id,
+            dailyTaskId: t.id,
+          };
+        }
+      }
+    }
+  }
+
+  return DETAILED_DAILY_TASK_LINKS.find(
+    (l) => l.detailedTaskId === targetDetailedTaskId
+  );
+}
+
+export function findDailyTaskLink(
+  dayId: string,
+  targetDailyTaskId: string,
+  columns?: DayColumn[],
+  detailedTasks?: DetailedTask[]
+): DetailedDailyTaskLink | undefined {
+  if (columns) {
+    const col = columns.find((c) => c.id === dayId);
+    const task = col?.tasks.find((t) => t.id === targetDailyTaskId);
+    if (task?.linkedDetailedTaskId) {
+      return {
+        detailedTaskId: task.linkedDetailedTaskId,
+        dayId,
+        dailyTaskId: targetDailyTaskId,
+      };
+    }
+  }
+
+  if (detailedTasks) {
+    const dt = detailedTasks.find(
+      (t) => t.linkedDailyTaskId === targetDailyTaskId && t.linkedDayId === dayId
+    );
+    if (dt) {
+      return {
+        detailedTaskId: dt.id,
+        dayId,
+        dailyTaskId: targetDailyTaskId,
+      };
+    }
+  }
+
+  return DETAILED_DAILY_TASK_LINKS.find(
+    (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
+  );
+}
+
 export function syncDetailedTaskToggle(
   detailedTasks: DetailedTask[],
   columns: DayColumn[],
@@ -558,8 +632,10 @@ export function syncDetailedTaskToggle(
     return toggled;
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.detailedTaskId === targetDetailedTaskId
+  const link = findDetailedTaskLink(
+    targetDetailedTaskId,
+    detailedTasks,
+    columns
   );
 
   let nextColumns = columns;
@@ -732,8 +808,11 @@ export function syncDailyTaskToggle(
     regeneratedTargetDayName = regen.targetDayName;
   }
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
+  const link = findDailyTaskLink(
+    dayId,
+    targetDailyTaskId,
+    nextColumns,
+    detailedTasks
   );
 
   let nextDetailedTasks = detailedTasks;
@@ -773,8 +852,10 @@ export function syncDetailedTaskStatus(
     return updated;
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.detailedTaskId === targetDetailedTaskId
+  const link = findDetailedTaskLink(
+    targetDetailedTaskId,
+    detailedTasks,
+    columns
   );
 
   let nextColumns = columns;
@@ -812,8 +893,10 @@ export function syncDetailedTaskPriority(
     return { ...t, priority: nextP };
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.detailedTaskId === targetDetailedTaskId
+  const link = findDetailedTaskLink(
+    targetDetailedTaskId,
+    detailedTasks,
+    columns
   );
 
   let nextColumns = columns;
@@ -844,8 +927,10 @@ export function syncDetailedTaskText(
     t.id === targetDetailedTaskId ? { ...t, text: clean } : t
   );
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.detailedTaskId === targetDetailedTaskId
+  const link = findDetailedTaskLink(
+    targetDetailedTaskId,
+    detailedTasks,
+    columns
   );
 
   let nextColumns = columns;
@@ -882,8 +967,10 @@ export function syncDetailedTaskCategory(
     return { ...t, category: nextCat };
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.detailedTaskId === targetDetailedTaskId
+  const link = findDetailedTaskLink(
+    targetDetailedTaskId,
+    detailedTasks,
+    columns
   );
 
   let nextColumns = columns;
@@ -924,8 +1011,11 @@ export function syncDailyTaskPriority(
     };
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
+  const link = findDailyTaskLink(
+    dayId,
+    targetDailyTaskId,
+    nextColumns,
+    detailedTasks
   );
 
   let nextDetailedTasks = detailedTasks;
@@ -964,8 +1054,11 @@ export function syncDailyTaskCategory(
     };
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
+  const link = findDailyTaskLink(
+    dayId,
+    targetDailyTaskId,
+    nextColumns,
+    detailedTasks
   );
 
   let nextDetailedTasks = detailedTasks;
@@ -999,8 +1092,11 @@ export function syncDailyTaskText(
     };
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
+  const link = findDailyTaskLink(
+    dayId,
+    targetDailyTaskId,
+    nextColumns,
+    detailedTasks
   );
 
   let nextDetailedTasks = detailedTasks;
@@ -1039,8 +1135,11 @@ export function syncDailyTaskRecurring(
     };
   });
 
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.dayId === dayId && l.dailyTaskId === targetDailyTaskId
+  const link = findDailyTaskLink(
+    dayId,
+    targetDailyTaskId,
+    nextColumns,
+    detailedTasks
   );
 
   let nextDetailedTasks = detailedTasks;
@@ -1238,8 +1337,11 @@ export function addQuickTaskToDayColumn(
 
   let nextDetailedTasks = detailedTasks;
   if (updatedDailyTaskId) {
-    const link = DETAILED_DAILY_TASK_LINKS.find(
-      (l) => l.dayId === dayId && l.dailyTaskId === updatedDailyTaskId
+    const link = findDailyTaskLink(
+      dayId,
+      updatedDailyTaskId,
+      nextColumns,
+      detailedTasks
     );
     if (link) {
       nextDetailedTasks = detailedTasks.map((dt) =>
@@ -1499,8 +1601,11 @@ export function archiveCompletedTasks(
       const cleanText = task.text.trim();
       if (!task.completed || !cleanText || cleanText === '—') continue;
 
-      const link = DETAILED_DAILY_TASK_LINKS.find(
-        (l) => l.dayId === col.id && l.dailyTaskId === task.id
+      const link = findDailyTaskLink(
+        col.id,
+        task.id,
+        columns,
+        detailedTasks
       );
       const linkedDt = link
         ? detailedTasks.find((dt) => dt.id === link.detailedTaskId)
@@ -1535,8 +1640,10 @@ export function archiveCompletedTasks(
     if (!dt.completed || !cleanText || cleanText === '—') continue;
     if (capturedDetailedIds.has(dt.id)) continue;
 
-    const link = DETAILED_DAILY_TASK_LINKS.find(
-      (l) => l.detailedTaskId === dt.id
+    const link = findDetailedTaskLink(
+      dt.id,
+      detailedTasks,
+      columns
     );
     const linkedCol = link
       ? columns.find((c) => c.id === link.dayId)
@@ -1620,9 +1727,7 @@ export function archiveSingleDailyTask(
   }
 
   const nowIso = timestampIso || new Date().toISOString();
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.dayId === dayId && l.dailyTaskId === taskId
-  );
+  const link = findDailyTaskLink(dayId, taskId, columns, detailedTasks);
   const linkedDt = link
     ? detailedTasks.find((dt) => dt.id === link.detailedTaskId)
     : undefined;
@@ -1693,9 +1798,7 @@ export function archiveSingleDetailedTask(
   }
 
   const nowIso = timestampIso || new Date().toISOString();
-  const link = DETAILED_DAILY_TASK_LINKS.find(
-    (l) => l.detailedTaskId === detailedTaskId
-  );
+  const link = findDetailedTaskLink(detailedTaskId, detailedTasks, columns);
   const linkedCol = link ? columns.find((c) => c.id === link.dayId) : undefined;
   const linkedDailyTask =
     link && linkedCol
@@ -2212,6 +2315,15 @@ export function formatVoiceTranscript(
     return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   }
   return `${base} ${cleaned}`;
+}
+
+export function isSpeechRecognitionSupported(
+  targetWindow: any = typeof window !== 'undefined' ? window : undefined
+): boolean {
+  if (!targetWindow) return false;
+  return Boolean(
+    targetWindow.SpeechRecognition || targetWindow.webkitSpeechRecognition
+  );
 }
 
 export function isDayAllDone(tasks: DailyTask[]): boolean {
@@ -2743,6 +2855,14 @@ export function generateStandaloneHtmlExport(
     .task-row { display: flex; align-items: center; gap: 8px; }
     .task-note { font-size: 11px; color: #7A7269; padding-left: 22px; }
     .done .task-text { text-decoration: line-through; color: #A59E95; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #181513; color: #EDE8E1; }
+      .container { background: #1E1B18; border-color: #38332E; box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+      .col { background: #1E1B18; border-color: #38332E; }
+      .task { border-bottom-color: #282420; }
+      .task-note { color: #9E968D; }
+      .done .task-text { color: #736B63; }
+    }
   </style>
 </head>
 <body>
@@ -2765,13 +2885,14 @@ export function generateStandaloneHtmlExport(
               .filter((t) => t.text.trim().length > 0)
               .map((t) => {
                 const safeText = escapeHtml(t.text);
+                const safeTaskId = escapeHtml(t.id);
                 const safeNotes =
                   t.notes && t.notes.trim().length > 0
                     ? `<div class="task-note">${escapeHtml(t.notes.trim())}</div>`
                     : '';
                 return `<div class="task ${t.completed ? 'done' : ''}">
                   <label class="task-row">
-                    <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="this.closest('.task').classList.toggle('done')" />
+                    <input type="checkbox" data-task-id="${safeTaskId}" ${t.completed ? 'checked' : ''} />
                     <span class="task-text">${safeText}</span>
                   </label>
                   ${safeNotes}
@@ -2783,6 +2904,36 @@ export function generateStandaloneHtmlExport(
         .join('')}
     </div>
   </div>
+  <script>
+    (function() {
+      try {
+        var KEY = 'my_tasks_html_state_v1';
+        var stored = localStorage.getItem(KEY);
+        var state = stored ? JSON.parse(stored) : {};
+        var inputs = document.querySelectorAll('input[type="checkbox"][data-task-id]');
+        inputs.forEach(function(cb) {
+          var id = cb.getAttribute('data-task-id');
+          if (id && Object.prototype.hasOwnProperty.call(state, id)) {
+            cb.checked = Boolean(state[id]);
+            var card = cb.closest('.task');
+            if (card) card.classList.toggle('done', cb.checked);
+          }
+        });
+        document.addEventListener('change', function(e) {
+          if (e.target && e.target.matches && e.target.matches('input[type="checkbox"][data-task-id]')) {
+            var cb = e.target;
+            var id = cb.getAttribute('data-task-id');
+            var card = cb.closest('.task');
+            if (card) card.classList.toggle('done', cb.checked);
+            if (id) {
+              state[id] = cb.checked;
+              try { localStorage.setItem(KEY, JSON.stringify(state)); } catch(_) {}
+            }
+          }
+        });
+      } catch(_) {}
+    })();
+  </script>
 </body>
 </html>`;
 }
@@ -3022,6 +3173,59 @@ export function parsePersistedDashboardState(rawJson: string | null): {
       activeTheme: defaultTheme,
     };
   }
+}
+
+/**
+ * Validates whether candidate data has the structural signature of a valid dashboard backup.
+ * Strictly requires an array of 7 day columns, each containing an array of tasks.
+ */
+export function isValidDashboardBackup(data: unknown): boolean {
+  if (!data || typeof data !== 'object') return false;
+  const candidate = data as Record<string, unknown>;
+  if (!Array.isArray(candidate.columns) || candidate.columns.length !== 7) {
+    return false;
+  }
+  return candidate.columns.every(
+    (col: unknown) =>
+      col &&
+      typeof col === 'object' &&
+      typeof (col as Record<string, unknown>).id === 'string' &&
+      Array.isArray((col as Record<string, unknown>).tasks)
+  );
+}
+
+/**
+ * Parses and strictly validates an uploaded JSON backup file string.
+ * Unlike parsePersistedDashboardState (which falls back to blank defaults for local storage recovery),
+ * this function throws an Error if the payload is malformed or lacks the required 7-day columns structure,
+ * preventing silent user data overwrites during restore.
+ */
+export function parseDashboardBackup(rawJsonString: string): {
+  columns: DayColumn[];
+  detailedTasks: DetailedTask[];
+  monthlyGoals: DetailedTask[];
+  yearlyGoals: DetailedTask[];
+  archivedTasks: ArchivedTask[];
+  activeTheme: ThemeId;
+} {
+  if (!rawJsonString || typeof rawJsonString !== 'string') {
+    throw new Error('Empty or invalid backup content');
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(rawJsonString);
+  } catch {
+    throw new Error('Malformed JSON payload');
+  }
+
+  if (!isValidDashboardBackup(parsed)) {
+    throw new Error(
+      'Invalid backup format: missing required 7-day columns structure'
+    );
+  }
+
+  return parsePersistedDashboardState(rawJsonString);
 }
 
 export const THEME_ORDER: ThemeId[] = [

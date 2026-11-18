@@ -171,3 +171,5 @@ export const WeeklyProgressTrendsChart: React.FC<
     </div>
   );
 };
+
+export default WeeklyProgressTrendsChart;

@@ -55,7 +55,7 @@ Starts the local development server at `http://localhost:3000`.
 npm test
 ```
 
-Runs the test suite (68 unit tests) covering state management, audio synthesis, fullscreen APIs, Pomodoro logic, recurring tasks, undo/redo, and CSV exports.
+Runs the test suite (96 unit tests) covering state management, audio synthesis, fullscreen APIs, Pomodoro logic, recurring tasks, undo/redo, and CSV exports.
 
 ### Typecheck & Linting
 
@@ -113,8 +113,8 @@ A multi-stage [`Dockerfile`](file:///d:/learn/To%20do%20list/Dockerfile) and [`n
 # Build Docker image
 docker build -t interactive-todo:latest .
 
-# Run container
-docker run -p 8080:80 interactive-todo:latest
+# Run container (unprivileged user on port 8080)
+docker run -p 8080:8080 interactive-todo:latest
 ```
 
 ---

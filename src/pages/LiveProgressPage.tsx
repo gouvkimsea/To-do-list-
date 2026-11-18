@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { SectionHeader } from '../components/SectionHeader';
 import { BrowserFrame } from '../components/BrowserFrame';
 import { LiveProgressBoard } from '../components/LiveProgressSection';
-import { WeeklyProgressTrendsChart } from '../components/WeeklyProgressTrendsChart';
 import { SharedDashboardPageProps } from './types';
+
+const WeeklyProgressTrendsChart = lazy(
+  () => import('../components/WeeklyProgressTrendsChart')
+);
 
 export const LiveProgressPage: React.FC<SharedDashboardPageProps> = ({
   columns,
@@ -35,14 +38,14 @@ export const LiveProgressPage: React.FC<SharedDashboardPageProps> = ({
           className="w-full"
           defaultFullscreen
           chromeRightSlot={
-            <div className="inline-flex items-center bg-[#E4DDD3] p-0.5 rounded-full">
+            <div className="inline-flex items-center bg-[#E4DDD3] dark:bg-[#2B2622] p-0.5 rounded-full">
               <button
                 type="button"
                 onClick={() => setChartTab('breakdown')}
                 className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-colors cursor-pointer whitespace-nowrap ${
                   chartTab === 'breakdown'
-                    ? 'bg-white text-[#2F2B28] shadow-2xs'
-                    : 'text-[#6E665E] hover:text-[#2F2B28]'
+                    ? 'bg-white dark:bg-[#1E1B18] text-[#2F2B28] dark:text-[#EDE8E1] shadow-2xs'
+                    : 'text-[#6E665E] dark:text-[#9A9187] hover:text-[#2F2B28] dark:hover:text-[#EDE8E1]'
                 }`}
               >
                 Live Breakdown
@@ -52,8 +55,8 @@ export const LiveProgressPage: React.FC<SharedDashboardPageProps> = ({
                 onClick={() => setChartTab('trends')}
                 className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-colors cursor-pointer whitespace-nowrap ${
                   chartTab === 'trends'
-                    ? 'bg-white text-[#2F2B28] shadow-2xs'
-                    : 'text-[#6E665E] hover:text-[#2F2B28]'
+                    ? 'bg-white dark:bg-[#1E1B18] text-[#2F2B28] dark:text-[#EDE8E1] shadow-2xs'
+                    : 'text-[#6E665E] dark:text-[#9A9187] hover:text-[#2F2B28] dark:hover:text-[#EDE8E1]'
                 }`}
               >
                 4-Week Trends
@@ -87,11 +90,19 @@ export const LiveProgressPage: React.FC<SharedDashboardPageProps> = ({
             />
           ) : (
             <div className="p-3 sm:p-4 flex-1">
-              <WeeklyProgressTrendsChart
-                columns={columns}
-                selectedDate={selectedDate}
-                activeTheme={activeTheme}
-              />
+              <Suspense
+                fallback={
+                  <div className="h-64 flex items-center justify-center text-xs text-[#8A8279] dark:text-[#9A9187]">
+                    Loading trends chart...
+                  </div>
+                }
+              >
+                <WeeklyProgressTrendsChart
+                  columns={columns}
+                  selectedDate={selectedDate}
+                  activeTheme={activeTheme}
+                />
+              </Suspense>
             </div>
           )}
 

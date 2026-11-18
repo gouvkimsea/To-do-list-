@@ -198,7 +198,7 @@ interface SortableDailyTaskRowProps {
   searchQuery?: string;
 }
 
-const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
+const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = React.memo(({
   task,
   idx,
   dayId,
@@ -352,7 +352,7 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
         <input
           type="text"
           value={task.text}
-          placeholder="—"
+          placeholder="Type a task..."
           autoCapitalize="sentences"
           autoCorrect="on"
           enterKeyHint="done"
@@ -726,7 +726,8 @@ const SortableDailyTaskRow: React.FC<SortableDailyTaskRowProps> = ({
       </AnimatePresence>
     </motion.div>
   );
-};
+});
+SortableDailyTaskRow.displayName = 'SortableDailyTaskRow';
 
 interface DroppableDayTasksContainerProps {
   dayId: string;
@@ -1132,15 +1133,15 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
       <div className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3 px-1">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#9C948B] block">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#9C948B] dark:text-[#80776D] block">
               {mode === 'month' ? 'MONTHLY GOALS & TASKS' : 'YEARLY GOALS'}
             </span>
-            <h4 className="text-base font-bold text-[#2F2B28]">
+            <h4 className="text-base font-bold text-[#2F2B28] dark:text-[#EDE8E1]">
               {mode === 'month' ? 'June 2026' : '2026'}
             </h4>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-20 sm:w-28 h-2 bg-[#EFECE6] rounded-full overflow-hidden">
+            <div className="w-20 sm:w-28 h-2 bg-[#EFECE6] dark:bg-[#2B2622] rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-200"
                 style={{
@@ -1149,15 +1150,15 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                 }}
               />
             </div>
-            <span className="text-xs font-bold text-[#5A534C] tabular-nums">
+            <span className="text-xs font-bold text-[#5A534C] dark:text-[#B5ADA3] tabular-nums">
               {pct}% · {completedCount} of {totalCount}
             </span>
           </div>
         </div>
 
         {filteredGoals.length === 0 ? (
-          <div className="bg-white rounded-xl border border-[#ECE7DF] p-8 text-center">
-            <p className="text-xs font-semibold text-[#7A7269] mb-2">
+          <div className="bg-white dark:bg-[#1E1B18] rounded-xl border border-[#ECE7DF] dark:border-[#38332E] p-8 text-center">
+            <p className="text-xs font-semibold text-[#7A7269] dark:text-[#9E968D] mb-2">
               No {mode === 'month' ? 'monthly' : 'yearly'} tasks match{' '}
               {activeTagFilter !== 'All'
                 ? `tag "${activeTagFilter}"`
@@ -1185,13 +1186,13 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white rounded-xl border border-[#ECE7DF] p-2.5 sm:p-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white dark:bg-[#1E1B18] rounded-xl border border-[#ECE7DF] dark:border-[#38332E] p-2.5 sm:p-3.5">
             {[leftGoals, rightGoals].map((group, groupIdx) => (
               <div key={groupIdx} className="space-y-2">
                 {group.map((goal) => (
                   <div
                     key={goal.id}
-                    className="flex items-center gap-1.5 sm:gap-2 py-1.5 px-1.5 sm:px-2 rounded-lg hover:bg-[#FAF7F2] transition-colors border-b border-[#F3EFE8] last:border-b-0"
+                    className="flex items-center gap-1.5 sm:gap-2 py-1.5 px-1.5 sm:px-2 rounded-lg hover:bg-[#FAF7F2] dark:hover:bg-[#28231E] transition-colors border-b border-[#F3EFE8] dark:border-[#28231E] last:border-b-0"
                   >
                     <button
                       type="button"
@@ -1201,14 +1202,18 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                         goal.completed ? 'incomplete' : 'complete'
                       }`}
                       onClick={() => onToggleGoalTask?.(mode, goal.id)}
-                      className="w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                      className={`w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                        goal.completed
+                          ? ''
+                          : 'bg-[#FAF8F5] dark:bg-[#28231E] border border-[#D5CEC4] dark:border-[#4A423A]'
+                      }`}
                       style={{
                         backgroundColor: goal.completed
                           ? theme.checkboxBg
-                          : '#FAF8F5',
+                          : undefined,
                         border: goal.completed
                           ? 'none'
-                          : '1.5px solid #D5CEC4',
+                          : undefined,
                       }}
                     >
                       {goal.completed && (
@@ -1236,8 +1241,8 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       }}
                       className={`flex-1 min-w-0 bg-transparent text-xs font-medium focus:outline-none ${
                         goal.completed
-                          ? 'line-through text-[#A59E95]'
-                          : 'text-[#3B3632]'
+                          ? 'line-through text-[#A59E95] dark:text-[#7A7269]'
+                          : 'text-[#3B3632] dark:text-[#EDE8E1]'
                       }`}
                     />
 
@@ -1323,7 +1328,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 mb-2">
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
           <h3
-            className={`font-bold tracking-tight text-[#2F2B28] ${
+            className={`font-bold tracking-tight text-[#2F2B28] dark:text-[#EDE8E1] ${
               compact ? 'text-base md:text-lg' : 'text-lg sm:text-xl md:text-[22px]'
             }`}
           >

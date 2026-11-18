@@ -86,16 +86,16 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
       metrics.byStatus.Done || 1;
 
   return (
-    <div className="p-3 sm:p-4 lg:p-5 bg-[#FAF7F2] select-none flex-1 flex flex-col gap-3.5 sm:gap-4">
+    <div className="p-3 sm:p-4 lg:p-5 bg-[#FAF7F2] dark:bg-[#171513] select-none flex-1 flex flex-col gap-3.5 sm:gap-4">
       {/* Upper 2-Column Detailed Tasks Card */}
-      <div className="bg-white rounded-2xl border border-[#ECE7DF] p-3 sm:p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex-1 flex flex-col">
+      <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#ECE7DF] dark:border-[#38332E] p-3 sm:p-4 shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex-1 flex flex-col">
         {/* Dashboard Focus Header: Active Tasks + Built-in 25-Minute Pomodoro Timer + Archive Actions */}
         <div
           data-testid="dashboard-focus-header"
-          className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2 border-b border-[#F4F0E8] px-1"
+          className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2 border-b border-[#F4F0E8] dark:border-[#332E2A] px-1"
         >
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[#8A8279]">
+            <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[#8A8279] dark:text-[#9E968D]">
               ACTIVE FOCUS TASKS ({visibleDetailedTasks.length})
             </span>
             {archivedCount > 0 && onOpenArchiveModal && (
@@ -103,7 +103,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                 type="button"
                 onClick={onOpenArchiveModal}
                 data-testid="dashboard-archived-pill"
-                className="inline-flex items-center gap-1 text-[10px] font-bold bg-[#F4EFE6] hover:bg-[#EAE1D3] text-[#7A624D] px-2 py-0.5 rounded-full transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-[10px] font-bold bg-[#F4EFE6] dark:bg-[#28231E] hover:bg-[#EAE1D3] dark:hover:bg-[#332C25] text-[#7A624D] dark:text-[#C5B7A6] px-2 py-0.5 rounded-full transition-colors cursor-pointer"
               >
                 <Archive className="w-2.5 h-2.5 text-[#B05C37]" />
                 <span>{archivedCount} in Archive</span>
@@ -120,7 +120,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                 onClick={onArchiveCompletedTasks}
                 data-testid="dashboard-archive-completed-btn"
                 title="Move all completed tasks to Archive to declutter the view"
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F5DFD0] hover:bg-[#EED2BF] text-[#9A4E28] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#F5DFD0] dark:bg-[#3D2518] hover:bg-[#EED2BF] dark:hover:bg-[#4E3020] text-[#9A4E28] dark:text-[#E8936C] transition-colors cursor-pointer"
               >
                 <Archive className="w-3 h-3" />
                 <span>Archive Completed ({completedInBoardCount})</span>
@@ -133,7 +133,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                 onClick={onOpenArchiveModal}
                 data-testid="dashboard-open-archive-btn"
                 title="View archived tasks history (Press A)"
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF7F2] hover:bg-[#EFECE6] border border-[#E2D9CC] text-[#4A433C] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#FAF7F2] dark:bg-[#28231E] hover:bg-[#EFECE6] dark:hover:bg-[#332C25] border border-[#E2D9CC] dark:border-[#38332E] text-[#4A433C] dark:text-[#EDE8E1] transition-colors cursor-pointer"
               >
                 <Archive className="w-3 h-3 text-[#B05C37]" />
                 <span>Archive ({archivedCount})</span>
@@ -149,7 +149,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
           aria-label="Filter focus tasks by tag"
           className="flex items-center gap-1.5 pb-2 mb-1 px-1 border-b border-[#F4F0E8] dark:border-[#38332E] overflow-x-auto no-scrollbar touch-scroll-x flex-nowrap sm:flex-wrap"
         >
-          <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#8A8279] mr-0.5 shrink-0">
+          <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#8A8279] dark:text-[#9E968D] mr-0.5 shrink-0">
             TAGS
           </span>
           <button
@@ -159,8 +159,8 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
             data-testid="dashboard-tag-filter-All"
             className={`px-2 py-1 rounded text-[9.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums touch-manipulation ${
               activeTagFilter === 'All'
-                ? 'bg-[#2F2B28] text-white border-[#2F2B28] shadow-2xs'
-                : 'bg-[#FAF7F2] text-[#5A534C] border-[#DED8CE] hover:bg-[#EFECE6]'
+                ? 'bg-[#2F2B28] dark:bg-[#FAF6F0] text-white dark:text-[#141210] border-[#2F2B28] dark:border-[#FAF6F0] shadow-2xs'
+                : 'bg-[#FAF7F2] dark:bg-[#25211D] text-[#5A534C] dark:text-[#C5B7A6] border-[#DED8CE] dark:border-[#38332E] hover:bg-[#EFECE6] dark:hover:bg-[#2F2A25]'
             }`}
           >
             All ({nonArchivedDetailedTasks.length})
@@ -184,7 +184,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                 })`}
                 className={`px-2 py-1 rounded text-[9.5px] font-bold border transition-all cursor-pointer whitespace-nowrap shrink-0 leading-none tabular-nums touch-manipulation ${
                   isSelected
-                    ? 'ring-2 ring-[#2F2B28]/45 scale-105 shadow-2xs'
+                    ? 'ring-2 ring-[#2F2B28]/45 dark:ring-[#FAF6F0]/45 scale-105 shadow-2xs'
                     : 'opacity-85 hover:opacity-100'
                 }`}
                 style={{
@@ -202,7 +202,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
               type="button"
               onClick={() => setActiveTagFilter('All')}
               data-testid="dashboard-tag-filter-reset"
-              className="text-[9.5px] font-semibold text-[#8A8279] hover:text-[#2F2B28] underline ml-1 cursor-pointer whitespace-nowrap shrink-0 touch-manipulation"
+              className="text-[9.5px] font-semibold text-[#8A8279] dark:text-[#9E968D] hover:text-[#2F2B28] dark:hover:text-[#EDE8E1] underline ml-1 cursor-pointer whitespace-nowrap shrink-0 touch-manipulation"
             >
               Show all
             </button>
@@ -211,7 +211,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
 
         {visibleDetailedTasks.length === 0 ? (
           <div className="py-5 my-auto text-center space-y-2">
-            <p className="text-xs font-semibold text-[#7A7269]">
+            <p className="text-xs font-semibold text-[#7A7269] dark:text-[#9E968D]">
               {activeTagFilter !== 'All'
                 ? `No focus tasks tagged "${activeTagFilter}".`
                 : searchQuery.trim()
@@ -222,7 +222,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTagFilter('All')}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4EFE6] hover:bg-[#EAE1D3] text-[#4A433C] text-[11px] font-bold transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4EFE6] dark:bg-[#28231E] hover:bg-[#EAE1D3] dark:hover:bg-[#332C25] text-[#4A433C] dark:text-[#EDE8E1] text-[11px] font-bold transition-colors cursor-pointer"
               >
                 <span>Show All Tags</span>
               </button>
@@ -231,7 +231,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
               <button
                 type="button"
                 onClick={onOpenArchiveModal}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4EFE6] hover:bg-[#EAE1D3] text-[#4A433C] text-[11px] font-bold transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4EFE6] dark:bg-[#28231E] hover:bg-[#EAE1D3] dark:hover:bg-[#332C25] text-[#4A433C] dark:text-[#EDE8E1] text-[11px] font-bold transition-colors cursor-pointer"
               >
                 <Archive className="w-3 h-3 text-[#B05C37]" />
                 <span>View {archivedCount} Archived Tasks</span>
@@ -243,12 +243,12 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
             {[leftColumnTasks, rightColumnTasks].map((colTasks, colIdx) => (
               <div
                 key={colIdx}
-                className="divide-y divide-[#F4F0E8] flex flex-col justify-around"
+                className="divide-y divide-[#F4F0E8] dark:divide-[#332E2A] flex flex-col justify-around"
               >
                 {colTasks.map((task) => (
                   <div
                     key={task.id}
-                    className="flex items-center gap-1.5 sm:gap-2.5 py-1.5 sm:py-2 px-1.5 hover:bg-[#FAF8F5] rounded-lg transition-colors group"
+                    className="flex items-center gap-1.5 sm:gap-2.5 py-1.5 sm:py-2 px-1.5 hover:bg-[#FAF8F5] dark:hover:bg-[#26221E] rounded-lg transition-colors group"
                   >
                     <button
                       type="button"
@@ -256,12 +256,15 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                       aria-checked={task.completed}
                       aria-label={`Detailed task "${task.text}"`}
                       onClick={() => onToggleDetailedTask(task.id)}
-                      className="w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors cursor-pointer touch-manipulation relative after:absolute after:-inset-1.5 after:content-['']"
+                      className={`w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors cursor-pointer touch-manipulation relative after:absolute after:-inset-1.5 after:content-[''] ${
+                        task.completed
+                          ? 'border-0'
+                          : 'border-[1.5px] border-[#D7D0C6] dark:border-[#4A433C] bg-[#FAF8F5] dark:bg-[#26221E]'
+                      }`}
                       style={{
                         backgroundColor: task.completed
                           ? theme.checkboxBg
-                          : '#FAF8F5',
-                        border: task.completed ? 'none' : '1.5px solid #D7D0C6',
+                          : undefined,
                       }}
                     >
                       {task.completed && (
@@ -281,8 +284,8 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                       }
                       className={`flex-1 min-w-0 bg-transparent text-xs sm:text-[13px] font-medium focus:outline-none ${
                         task.completed
-                          ? 'line-through text-[#A59E95]'
-                          : 'text-[#3B3632]'
+                          ? 'line-through text-[#A59E95] dark:text-[#6A635B]'
+                          : 'text-[#3B3632] dark:text-[#EDE8E1]'
                       }`}
                     />
 
@@ -358,7 +361,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                         aria-label={`Archive completed task "${task.text}"`}
                         data-testid={`archive-detailed-task-${task.id}`}
                         title="Move completed task to Archive"
-                        className="p-1 rounded text-[#9C948B] hover:text-[#B05C37] hover:bg-[#F4EFE6] transition-colors cursor-pointer shrink-0 touch-manipulation"
+                        className="p-1 rounded text-[#9C948B] dark:text-[#80776D] hover:text-[#B05C37] dark:hover:text-[#E8936C] hover:bg-[#F4EFE6] dark:hover:bg-[#28231E] transition-colors cursor-pointer shrink-0 touch-manipulation"
                       >
                         <Archive className="w-3.5 h-3.5" />
                       </button>
@@ -373,14 +376,14 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
 
       {/* Live Dashboard Section */}
       <div className="flex-1 flex flex-col">
-        <h4 className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#7A6E63] mb-2.5 px-1">
+        <h4 className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#7A6E63] dark:text-[#9E968D] mb-2.5 px-1">
           DASHBOARD
         </h4>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[0.95fr_1.35fr_0.9fr_0.95fr_1.2fr] gap-3 sm:gap-3.5 lg:gap-3.5 flex-1">
           {/* Card 1: Week Completion Donut */}
-          <div className="bg-white rounded-2xl border border-[#ECE7DF] p-3.5 sm:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279]">
+          <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#ECE7DF] dark:border-[#38332E] p-3.5 sm:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] dark:text-[#9E968D]">
               WEEK COMPLETION
             </span>
 
@@ -391,7 +394,6 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                   cy="50"
                   r={radius}
                   fill="transparent"
-                  stroke="#EFECE6"
                   strokeWidth="10"
                   className="donut-track-ring"
                 />
@@ -400,7 +402,6 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                   cy="50"
                   r={radius}
                   fill="transparent"
-                  stroke="#604E3D"
                   strokeWidth="10"
                   strokeDasharray={circumference}
                   strokeDashoffset={strokeDashoffset}
@@ -411,7 +412,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
               <div className="absolute inset-0 flex items-center justify-center">
                 <span
                   data-testid="week-completion-pct"
-                  className="text-2xl font-black text-[#2F2B28] tabular-nums"
+                  className="text-2xl font-black text-[#2F2B28] dark:text-[#EDE8E1] tabular-nums"
                 >
                   {metrics.completionPercentage}%
                 </span>
@@ -420,15 +421,15 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
 
             <div
               data-testid="week-completion-count"
-              className="text-center text-[11px] font-semibold text-[#8A8279] tabular-nums"
+              className="text-center text-[11px] font-semibold text-[#8A8279] dark:text-[#9E968D] tabular-nums"
             >
               {metrics.completedTasks} of {metrics.totalTasks} tasks
             </div>
           </div>
 
           {/* Card 2: Daily Progress Vertical Bars */}
-          <div className="bg-white rounded-2xl border border-[#ECE7DF] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] mb-1.5 sm:mb-2">
+          <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#ECE7DF] dark:border-[#38332E] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] dark:text-[#9E968D] mb-1.5 sm:mb-2">
               DAILY PROGRESS
             </span>
 
@@ -438,10 +439,10 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                   key={day.dayId}
                   className="flex flex-col items-center gap-1 sm:gap-1.5"
                 >
-                  <span className="text-[9.5px] font-bold text-[#8A8279] tabular-nums">
+                  <span className="text-[9.5px] font-bold text-[#8A8279] dark:text-[#9E968D] tabular-nums">
                     {day.percentage}%
                   </span>
-                  <div className="w-4 sm:w-5 lg:w-5.5 h-16 sm:h-20 bg-[#F2EFE9] rounded-full overflow-hidden flex items-end">
+                  <div className="w-4 sm:w-5 lg:w-5.5 h-16 sm:h-20 bg-[#F2EFE9] dark:bg-[#2A2621] rounded-full overflow-hidden flex items-end">
                     <div
                       className="w-full rounded-full transition-all duration-300"
                       style={{
@@ -450,7 +451,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                       }}
                     />
                   </div>
-                  <span className="text-[10px] sm:text-[10.5px] font-bold text-[#6E675F]">
+                  <span className="text-[10px] sm:text-[10.5px] font-bold text-[#6E675F] dark:text-[#9E968D]">
                     {day.shortName}
                   </span>
                 </div>
@@ -459,8 +460,8 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
           </div>
 
           {/* Card 3: By Priority */}
-          <div className="bg-white rounded-2xl border border-[#ECE7DF] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] mb-1.5 sm:mb-2">
+          <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#ECE7DF] dark:border-[#38332E] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] dark:text-[#9E968D] mb-1.5 sm:mb-2">
               BY PRIORITY
             </span>
 
@@ -477,10 +478,10 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                 );
                 return (
                   <div key={item.label} className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-[#5A534C] w-9 shrink-0">
+                    <span className="text-[11px] font-semibold text-[#5A534C] dark:text-[#C5B7A6] w-9 shrink-0">
                       {item.label}
                     </span>
-                    <div className="flex-1 h-2.5 bg-[#F2EFE9] rounded-full overflow-hidden">
+                    <div className="flex-1 h-2.5 bg-[#F2EFE9] dark:bg-[#2A2621] rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
@@ -489,7 +490,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                         }}
                       />
                     </div>
-                    <span className="text-[11px] font-bold text-[#3B3632] w-5 text-right tabular-nums">
+                    <span className="text-[11px] font-bold text-[#3B3632] dark:text-[#EDE8E1] w-5 text-right tabular-nums">
                       {item.count}
                     </span>
                   </div>
@@ -500,8 +501,8 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
           </div>
 
           {/* Card 4: By Status */}
-          <div className="bg-white rounded-2xl border border-[#ECE7DF] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] mb-1.5 sm:mb-2">
+          <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#ECE7DF] dark:border-[#38332E] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] dark:text-[#9E968D] mb-1.5 sm:mb-2">
               BY STATUS
             </span>
 
@@ -530,10 +531,10 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                 );
                 return (
                   <div key={item.label} className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-[#5A534C] w-16 shrink-0 truncate">
+                    <span className="text-[11px] font-semibold text-[#5A534C] dark:text-[#C5B7A6] w-16 shrink-0 truncate">
                       {item.label}
                     </span>
-                    <div className="flex-1 h-2.5 bg-[#F2EFE9] rounded-full overflow-hidden">
+                    <div className="flex-1 h-2.5 bg-[#F2EFE9] dark:bg-[#2A2621] rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300"
                         style={{
@@ -542,7 +543,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                         }}
                       />
                     </div>
-                    <span className="text-[11px] font-bold text-[#3B3632] w-5 text-right tabular-nums">
+                    <span className="text-[11px] font-bold text-[#3B3632] dark:text-[#EDE8E1] w-5 text-right tabular-nums">
                       {item.count}
                     </span>
                   </div>
@@ -555,9 +556,9 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
           {/* Card 5: By Category */}
           <div
             data-testid="dashboard-by-category-card"
-            className="bg-white rounded-2xl border border-[#ECE7DF] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)] sm:col-span-2 lg:col-span-1"
+            className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#ECE7DF] dark:border-[#38332E] p-3 sm:p-3.5 lg:p-4 flex flex-col justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)] sm:col-span-2 lg:col-span-1"
           >
-            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] mb-1.5 sm:mb-2">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-[#8A8279] dark:text-[#9E968D] mb-1.5 sm:mb-2">
               BY CATEGORY
             </span>
 
@@ -580,7 +581,7 @@ export const LiveProgressBoard: React.FC<LiveProgressBoardProps> = ({
                     title={`Filter focus tasks by ${cat} (${count} total across week & focus tasks)`}
                     className={`flex items-center justify-between gap-1 px-2 py-1 rounded-lg border text-[10px] font-bold transition-all cursor-pointer tabular-nums ${
                       isSelected
-                        ? 'ring-2 ring-[#2F2B28]/45 scale-[1.02]'
+                        ? 'ring-2 ring-[#2F2B28]/45 dark:ring-[#FAF6F0]/45 scale-[1.02]'
                         : 'opacity-90 hover:opacity-100'
                     }`}
                     style={{
