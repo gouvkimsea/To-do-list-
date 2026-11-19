@@ -1759,14 +1759,14 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
             {isSearching && !compact && (
               <div
                 data-testid={`${instancePrefix}-search-results-bar`}
-                className="mb-2 px-3 py-2 rounded-lg bg-[#FAF5EE] border border-[#EADBCC] flex flex-wrap items-center justify-between gap-2 text-xs"
+                className="mb-2 px-3 py-2 rounded-lg bg-[#FAF5EE] dark:bg-[#2A2420] border border-[#EADBCC] dark:border-[#443B33] flex flex-wrap items-center justify-between gap-2 text-xs"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#C87D55]" />
-                  <span className="font-bold text-[#3B342F]">
+                  <span className="font-bold text-[#3B342F] dark:text-[#EDE8E1]">
                     Found {matchCounts.totalMatches} match{matchCounts.totalMatches === 1 ? '' : 'es'} for “{searchQuery}”
                   </span>
-                  <span className="text-[11px] text-[#7A7167]">
+                  <span className="text-[11px] text-[#7A7167] dark:text-[#A7A097]">
                     (This Week: {matchCounts.weeklyMatches} · Month: {matchCounts.monthlyMatches} · Year: {matchCounts.yearlyMatches})
                   </span>
                 </div>
@@ -1774,7 +1774,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                   {matchCounts.byField && matchCounts.byField.notes > 0 && (
                     <span
                       data-testid={`${instancePrefix}-search-note-count`}
-                      className="text-[10px] font-semibold bg-[#F5ECE2] text-[#9A5128] px-2 py-0.5 rounded"
+                      className="text-[10px] font-semibold bg-[#F5ECE2] dark:bg-[#3D2C24] text-[#9A5128] dark:text-[#E2A88C] px-2 py-0.5 rounded"
                     >
                       {matchCounts.byField.notes} matched in notes
                     </span>
@@ -1784,7 +1784,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       type="button"
                       onClick={() => onSearchQueryChange('')}
                       data-testid={`${instancePrefix}-search-clear-bar`}
-                      className="text-xs font-bold text-[#A85B33] hover:underline cursor-pointer"
+                      className="text-xs font-bold text-[#A85B33] dark:text-[#E2A88C] hover:underline cursor-pointer"
                     >
                       Clear search
                     </button>
@@ -1911,15 +1911,15 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
             {isSearching && matchCounts.weeklyMatches === 0 && (
               <div
                 data-testid={`${instancePrefix}-search-empty-state`}
-                className="col-span-full bg-white rounded-xl border border-[#ECE7DF] p-6 text-center my-2 shadow-xs"
+                className="col-span-full bg-white dark:bg-[#1E1B18] rounded-xl border border-[#ECE7DF] dark:border-[#38332E] p-6 text-center my-2 shadow-xs"
               >
-                <div className="w-10 h-10 rounded-full bg-[#FAF3EB] text-[#C87D55] flex items-center justify-center mx-auto mb-2.5">
+                <div className="w-10 h-10 rounded-full bg-[#FAF3EB] dark:bg-[#3D2C24] text-[#C87D55] dark:text-[#E2A88C] flex items-center justify-center mx-auto mb-2.5">
                   <Search className="w-5 h-5" />
                 </div>
-                <h4 className="text-sm font-bold text-[#2F2B28] mb-1">
+                <h4 className="text-sm font-bold text-[#2F2B28] dark:text-[#EDE8E1] mb-1">
                   No weekly tasks match "{searchQuery}"
                 </h4>
-                <p className="text-xs text-[#7A7269] max-w-md mx-auto mb-3">
+                <p className="text-xs text-[#7A7269] dark:text-[#A7A097] max-w-md mx-auto mb-3">
                   {matchCounts.monthlyMatches > 0 || matchCounts.yearlyMatches > 0
                     ? `Found ${matchCounts.monthlyMatches} match in monthly goals and ${matchCounts.yearlyMatches} in yearly goals.`
                     : 'Try searching by task name, category (Work, Personal, Health, Finance, Home, Growth), or note content.'}
@@ -1930,7 +1930,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       type="button"
                       onClick={() => onSelectView('month')}
                       data-testid={`${instancePrefix}-search-switch-month`}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF4EC] hover:bg-[#F3E8DB] text-[#A85B33] border border-[#ECD9C5] cursor-pointer transition-colors"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF4EC] dark:bg-[#28231E] hover:bg-[#F3E8DB] dark:hover:bg-[#38332E] text-[#A85B33] dark:text-[#E2A88C] border border-[#ECD9C5] dark:border-[#4A423A] cursor-pointer transition-colors"
                     >
                       View Monthly Matches ({matchCounts.monthlyMatches})
                     </button>
@@ -1940,7 +1940,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       type="button"
                       onClick={() => onSelectView('year')}
                       data-testid={`${instancePrefix}-search-switch-year`}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF4EC] hover:bg-[#F3E8DB] text-[#A85B33] border border-[#ECD9C5] cursor-pointer transition-colors"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#FAF4EC] dark:bg-[#28231E] hover:bg-[#F3E8DB] dark:hover:bg-[#38332E] text-[#A85B33] dark:text-[#E2A88C] border border-[#ECD9C5] dark:border-[#4A423A] cursor-pointer transition-colors"
                     >
                       View Yearly Matches ({matchCounts.yearlyMatches})
                     </button>
@@ -1950,7 +1950,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                       type="button"
                       onClick={() => onSearchQueryChange('')}
                       data-testid={`${instancePrefix}-search-clear-empty`}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#2F2B28] text-white hover:bg-[#433D38] cursor-pointer transition-colors"
+                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#2F2B28] dark:bg-[#FAF6F0] text-white dark:text-[#141210] hover:bg-[#433D38] dark:hover:bg-[#EAE2D6] cursor-pointer transition-colors"
                     >
                       Clear Search
                     </button>
@@ -2087,9 +2087,9 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                   <div
                     className={`${
                       compact ? 'px-1.5 py-1 gap-1.5' : 'px-2.5 py-1.5 gap-2'
-                    } bg-[#FCFBF9] border-t border-[#F2EFE9] flex items-center`}
+                    } bg-[#FCFBF9] dark:bg-[#1E1B18] border-t border-[#F2EFE9] dark:border-[#332E2A] flex items-center`}
                   >
-                    <div className="flex-1 h-1.5 bg-[#EFECE6] rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-[#EFECE6] dark:bg-[#2B2622] rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-200"
                         style={{
@@ -2105,7 +2105,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                           compact
                             ? 'text-[8px] px-1 py-0.2'
                             : 'text-[9px] px-1.5 py-0.5'
-                        } font-bold text-[#2D6E48] bg-[#CBEAD6] rounded-full shrink-0`}
+                        } font-bold text-[#2D6E48] dark:text-[#7FD48C] bg-[#CBEAD6] dark:bg-[#203624] rounded-full shrink-0`}
                       >
                         Done
                       </span>
@@ -2113,7 +2113,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                     <span
                       className={`${
                         compact ? 'text-[9px]' : 'text-[10px]'
-                      } font-bold text-[#8A8279] tabular-nums shrink-0`}
+                      } font-bold text-[#8A8279] dark:text-[#A7A097] tabular-nums shrink-0`}
                     >
                       {progress.fractionLabel}
                     </span>
@@ -2124,7 +2124,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                     data-testid={`${instancePrefix}-quick-add-row-${col.id}`}
                     className={`${
                       compact ? 'px-1.5 py-1' : 'px-2 py-1.5'
-                    } rounded-b-xl bg-[#FAF7F2] border-t border-[#ECE7DF] flex items-center gap-1`}
+                    } rounded-b-xl bg-[#FAF7F2] dark:bg-[#1A1715] border-t border-[#ECE7DF] dark:border-[#332E2A] flex items-center gap-1`}
                   >
                     <button
                       type="button"
@@ -2192,7 +2192,7 @@ export const InteractiveDashboard: React.FC<InteractiveDashboardProps> = ({
                           }
                         }
                       }}
-                      className={`w-full min-w-0 bg-white border border-[#E2DBD0] focus:border-[#C87D55] focus:outline-none rounded-md font-medium text-[#3B3632] placeholder:text-[#9C948B] transition-colors ${
+                      className={`w-full min-w-0 bg-white dark:bg-[#231F1C] border border-[#E2DBD0] dark:border-[#3D3630] focus:border-[#C87D55] dark:focus:border-[#E2A88C] focus:outline-none rounded-md font-medium text-[#3B3632] dark:text-[#EDE8E1] placeholder:text-[#9C948B] dark:placeholder:text-[#7A7269] transition-colors ${
                         compact
                           ? 'text-[9px] px-1 py-0.5'
                           : 'text-[11px] sm:text-xs px-1.5 py-0.5'

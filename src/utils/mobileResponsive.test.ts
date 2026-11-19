@@ -224,6 +224,10 @@ test('SpreadsheetSection provides horizontal touch scroll hint and sticky row he
     sheetCode.includes('touch-scroll-x'),
     'SpreadsheetSection must support touch-scroll-x momentum scrolling'
   );
+  assert.ok(
+    sheetCode.includes('Math.max(6, ...columns.map'),
+    'SpreadsheetSection must dynamically calculate maxTasks without hardcoded row truncation'
+  );
 });
 
 test('NotFoundPage renders prominent big 404 display and return navigation link', () => {

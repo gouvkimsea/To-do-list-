@@ -38,18 +38,18 @@ export const WeeklyProgressTrendsChart: React.FC<
   return (
     <div
       data-testid="weekly-progress-trends-card"
-      className="mt-9 max-w-4xl mx-auto bg-[#FDFBF7] rounded-2xl border border-[#E5DEC9] shadow-[0_14px_34px_-12px_rgba(68,53,39,0.09)] p-5 sm:p-6"
+      className="mt-9 max-w-4xl mx-auto bg-[#FDFBF7] dark:bg-[#1E1B18] rounded-2xl border border-[#E5DEC9] dark:border-[#38332E] shadow-[0_14px_34px_-12px_rgba(68,53,39,0.09)] p-5 sm:p-6"
     >
       {/* Card Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
         <div>
-          <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[#9A8F82] block mb-0.5">
+          <span className="text-[10px] font-bold tracking-[0.16em] uppercase text-[#9A8F82] dark:text-[#B5ADA3] block mb-0.5">
             4-WEEK TASK ANALYTICS
           </span>
-          <h3 className="text-lg sm:text-xl font-bold text-[#2F2B28] tracking-tight">
+          <h3 className="text-lg sm:text-xl font-bold text-[#2F2B28] dark:text-[#EDE8E1] tracking-tight">
             Weekly Progress Trends
           </h3>
-          <p className="text-xs font-medium text-[#8A8279] mt-0.5">
+          <p className="text-xs font-medium text-[#8A8279] dark:text-[#9A9187] mt-0.5">
             Completed vs. pending tasks over the last four weeks (live-synced
             with This Week)
           </p>
@@ -58,14 +58,14 @@ export const WeeklyProgressTrendsChart: React.FC<
         <div className="flex flex-wrap items-center gap-2.5">
           <div
             data-testid="trends-current-ratio"
-            className="bg-[#F4EFE6] border border-[#E5DEC9] rounded-full px-3 py-1 text-[11px] font-bold text-[#4A433C] tabular-nums"
+            className="bg-[#F4EFE6] dark:bg-[#28231E] border border-[#E5DEC9] dark:border-[#38332E] rounded-full px-3 py-1 text-[11px] font-bold text-[#4A433C] dark:text-[#EDE8E1] tabular-nums"
           >
             This Week: {currentWeek.completed} Done · {currentWeek.pending}{' '}
             Pending ({currentWeek.completionRate}%)
           </div>
 
           <div
-            className="inline-flex items-center bg-[#EFECE6] p-0.5 rounded-full border border-[#E4DDD3]"
+            className="inline-flex items-center bg-[#EFECE6] dark:bg-[#2B2622] p-0.5 rounded-full border border-[#E4DDD3] dark:border-[#38332E]"
             role="group"
             aria-label="Chart layout mode"
           >
@@ -74,8 +74,8 @@ export const WeeklyProgressTrendsChart: React.FC<
               onClick={() => setChartMode('stacked')}
               className={`px-2.5 py-1 text-[10px] font-bold rounded-full transition-colors cursor-pointer ${
                 chartMode === 'stacked'
-                  ? 'bg-white text-[#2F2B28] shadow-2xs'
-                  : 'text-[#7A7269] hover:text-[#2F2B28]'
+                  ? 'bg-white dark:bg-[#1E1B18] text-[#2F2B28] dark:text-[#EDE8E1] shadow-2xs'
+                  : 'text-[#7A7269] dark:text-[#9A9187] hover:text-[#2F2B28] dark:hover:text-[#EDE8E1]'
               }`}
             >
               Stacked Ratio
@@ -85,8 +85,8 @@ export const WeeklyProgressTrendsChart: React.FC<
               onClick={() => setChartMode('grouped')}
               className={`px-2.5 py-1 text-[10px] font-bold rounded-full transition-colors cursor-pointer ${
                 chartMode === 'grouped'
-                  ? 'bg-white text-[#2F2B28] shadow-2xs'
-                  : 'text-[#7A7269] hover:text-[#2F2B28]'
+                  ? 'bg-white dark:bg-[#1E1B18] text-[#2F2B28] dark:text-[#EDE8E1] shadow-2xs'
+                  : 'text-[#7A7269] dark:text-[#9A9187] hover:text-[#2F2B28] dark:hover:text-[#EDE8E1]'
               }`}
             >
               Side-by-Side
@@ -96,7 +96,7 @@ export const WeeklyProgressTrendsChart: React.FC<
       </div>
 
       {/* Recharts BarChart */}
-      <div className="w-full h-64 bg-white rounded-xl border border-[#ECE7DF] p-2 sm:p-4 overflow-hidden min-w-0">
+      <div className="w-full h-64 bg-white dark:bg-[#171513] rounded-xl border border-[#ECE7DF] dark:border-[#38332E] p-2 sm:p-4 overflow-hidden min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={trendData}

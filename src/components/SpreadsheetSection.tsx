@@ -40,7 +40,8 @@ export const SpreadsheetSection: React.FC<SpreadsheetSectionProps> = ({
   onExportCsv,
 }) => {
   const theme = THEMES[activeTheme];
-  const rowIndices = [0, 1, 2, 3, 4, 5]; // rows 2..7 in spreadsheet (row 1 is header)
+  const maxTasks = Math.max(6, ...columns.map((c) => c.tasks.length));
+  const rowIndices = Array.from({ length: maxTasks }, (_, i) => i); // rows 2..(maxTasks+1) in spreadsheet (row 1 is header)
 
   return (
     <div className="bg-white dark:bg-[#1E1B18] rounded-2xl border border-[#DFD8CE] dark:border-[#38332E] shadow-[0_20px_50px_-12px_rgba(45,60,48,0.15)] overflow-hidden w-full mx-auto">
