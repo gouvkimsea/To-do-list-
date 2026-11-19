@@ -251,3 +251,38 @@ test('NotFoundPage renders prominent big 404 display and return navigation link'
     'NotFoundPage must contain link back to root dashboard'
   );
 });
+
+test('MobileNavDrawer implements smooth left slide-in, staggered items, and scroll lock', () => {
+  const drawerPath = path.resolve(process.cwd(), 'src/components/MobileNavDrawer.tsx');
+  const drawerCode = fs.readFileSync(drawerPath, 'utf8');
+
+  // Animation dependencies
+  assert.ok(
+    drawerCode.includes('AnimatePresence') && drawerCode.includes('useReducedMotion'),
+    'MobileNavDrawer must import AnimatePresence and useReducedMotion'
+  );
+
+  // Left slide-in and fade
+  assert.ok(
+    drawerCode.includes("'-100%'") && drawerCode.includes('sidebarVariants'),
+    'MobileNavDrawer must slide in from left side of screen (-100%)'
+  );
+
+  // Staggered navigation items
+  assert.ok(
+    drawerCode.includes('staggerChildren') && drawerCode.includes('navItemVariants'),
+    'MobileNavDrawer must define staggered animation delay for navigation items'
+  );
+
+  // Background scroll lock
+  assert.ok(
+    drawerCode.includes("document.body.style.overflow = 'hidden'"),
+    'MobileNavDrawer must prevent background scrolling when open'
+  );
+
+  // Backdrop overlay & dismissal
+  assert.ok(
+    drawerCode.includes('bg-black/45') && drawerCode.includes('justify-start'),
+    'MobileNavDrawer must render backdrop overlay and align sidebar to the left'
+  );
+});
