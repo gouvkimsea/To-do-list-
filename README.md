@@ -10,7 +10,12 @@ A production-ready, interactive, and self-saving Weekly, Monthly, and Yearly To-
 
 - **Multi-Horizon Task Management**: Weekly daily columns (Monday through Sunday), monthly goal planning, and yearly milestone tracking.
 - **Visual Analytics**: Interactive daily completion rings, weekly progress percentage bars, and 4-week historical trend charts (powered by Recharts).
-- **Themes & Dark Mode**: 4 aesthetic color palettes (*Terracotta*, *Candy Pastel*, *Lavender Mist*, *Soft Neutral*) with automatic dark/light mode detection and manual toggle.
+- **Themes & Dark Mode**:
+  - Centralized semantic token architecture (`--color-bg-*`, `--color-text-*`, `--color-border-*`, `--color-btn-*`, `--color-status-*`) in CSS variables.
+  - **Light Mode**: Soft linen and warm ivory backgrounds (`#FAF6F0`, `#FDFBF7`, `#FAF7F2`) with dark espresso typography (`#2D2A26`) and balanced contrast that eliminates eye strain.
+  - **Dark Mode**: Layered warm espresso and obsidian surfaces (`#141210`, `#1F1C18`, `#26221E`, `#2B2622`) with soft ivory text (`#F4EFE8`, `#D9D0C5`), subtle borders (`#342E29`), and cohesive terracotta accents (`#E28E64`).
+  - 4 aesthetic color themes (*Terracotta*, *Candy Pastel*, *Lavender Mist*, *Soft Neutral*) with automatic dark/light mode detection, instant DOM flash prevention, and persistent localStorage sync.
+  - Custom scrollbars, styled date picker controls, and smooth 200ms theme transitions.
 - **Focus & Productivity**:
   - Integrated Pomodoro focus timer (25 min focus, 5 min short break) with sound cues.
   - Multi-level undo/redo history (`Ctrl+Z` / `Ctrl+Y`).
@@ -55,7 +60,7 @@ Starts the local development server at `http://localhost:3000`.
 npm test
 ```
 
-Runs the test suite (100 unit tests) covering state management, audio synthesis, fullscreen APIs, Pomodoro logic, recurring tasks, undo/redo, and CSV exports.
+Runs the test suite (103 unit tests) covering state management, audio synthesis, fullscreen APIs, Pomodoro logic, recurring tasks, undo/redo, centralized theme tokens, and CSV exports.
 
 ### Typecheck & Linting
 

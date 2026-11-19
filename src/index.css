@@ -34,6 +34,42 @@
   scrollbar-width: none;
 }
 
+/* Scrollbars - styled cleanly and consistently for Light and Dark modes */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb, #DDD5CB) var(--color-scrollbar-track, #FAF6F0);
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--color-scrollbar-track, #FAF6F0);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--color-scrollbar-thumb, #DDD5CB);
+  border-radius: 9999px;
+  border: 1px solid var(--color-scrollbar-track, #FAF6F0);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-scrollbar-thumb-hover, #C5BCB0);
+}
+
+/* Text Selection Styling */
+::selection {
+  background-color: rgba(194, 109, 67, 0.22);
+  color: #2D2A26;
+}
+
+html.dark ::selection {
+  background-color: rgba(226, 142, 100, 0.35);
+  color: #FAF6F0;
+}
+
 .touch-scroll-x {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -96,6 +132,8 @@ circle {
 
 :root {
   --navbar-height: 49px;
+
+  /* Chart & Donut Visual Properties */
   --chart-grid-stroke: #EFECE6;
   --chart-axis-stroke: #E5DEC9;
   --chart-tick-primary: #5A534C;
@@ -107,9 +145,68 @@ circle {
   --chart-pending-fill: #DFD8CE;
   --donut-track-stroke: #EFECE6;
   --donut-progress-stroke: #604E3D;
+
+  /* Centralized Semantic Theme Tokens - Light Mode (Soft Warm Linen / Ivory) */
+  --color-bg-canvas: #FAF6F0;
+  --color-bg-surface-primary: #FFFFFF;
+  --color-bg-surface-secondary: #FAF7F2;
+  --color-bg-surface-tertiary: #F4EFE6;
+  --color-bg-surface-elevated: #FDFBF7;
+  --color-bg-surface-hover: #F5EFEB;
+  --color-bg-sidebar: #FAF7F2;
+  --color-bg-input: #FFFFFF;
+  --color-bg-input-focus: #FFFFFF;
+
+  --color-text-primary: #2D2A26;
+  --color-text-secondary: #5A534C;
+  --color-text-muted: #8A8279;
+  --color-text-subtle: #A7A097;
+  --color-text-inverted: #FAF6F0;
+
+  --color-border-subtle: #F2ECE3;
+  --color-border-default: #E5DEC9;
+  --color-border-strong: #D8CFC2;
+  --color-border-focus: #C26D43;
+
+  --color-btn-primary-bg: #2F2B28;
+  --color-btn-primary-text: #FAF6F0;
+  --color-btn-primary-hover: #433E39;
+  --color-btn-secondary-bg: #F4EFE6;
+  --color-btn-secondary-text: #3B3530;
+  --color-btn-secondary-hover: #EAE1D3;
+
+  --color-accent-terracotta: #C26D43;
+  --color-accent-terracotta-hover: #AD5D35;
+  --color-accent-terracotta-subtle: #F6ECE3;
+  --color-accent-terracotta-text: #9A4E28;
+
+  --color-status-success-bg: #EFF3EE;
+  --color-status-success-border: #DCE6DA;
+  --color-status-success-text: #238854;
+
+  --color-status-warning-bg: #FAF3EB;
+  --color-status-warning-border: #F0CFB8;
+  --color-status-warning-text: #B07B54;
+
+  --color-status-error-bg: #FDE8E8;
+  --color-status-error-border: #F8B4B4;
+  --color-status-error-text: #9B1C1C;
+
+  --color-status-info-bg: #E6E2F3;
+  --color-status-info-border: #DAD4EC;
+  --color-status-info-text: #5D508C;
+
+  --color-scrollbar-track: #FAF6F0;
+  --color-scrollbar-thumb: #DDD5CB;
+  --color-scrollbar-thumb-hover: #C5BCB0;
+
+  --shadow-card: 0 10px 28px -8px rgba(68, 53, 39, 0.08);
+  --shadow-card-elevated: 0 20px 50px -12px rgba(68, 53, 39, 0.16);
+  --shadow-modal: 0 25px 60px -15px rgba(47, 43, 40, 0.25);
 }
 
 html.dark {
+  /* Chart & Donut Visual Properties */
   --chart-grid-stroke: #2C2722;
   --chart-axis-stroke: #3A342E;
   --chart-tick-primary: #D8CFC4;
@@ -121,6 +218,64 @@ html.dark {
   --chart-pending-fill: #3D3630;
   --donut-track-stroke: #2E2924;
   --donut-progress-stroke: #E28E64;
+
+  /* Centralized Semantic Theme Tokens - Dark Mode (Warm Espresso / Obsidian Layers) */
+  --color-bg-canvas: #141210;
+  --color-bg-surface-primary: #1F1C18;
+  --color-bg-surface-secondary: #171412;
+  --color-bg-surface-tertiary: #26221E;
+  --color-bg-surface-elevated: #1C1916;
+  --color-bg-surface-hover: #26221E;
+  --color-bg-sidebar: #1E1B18;
+  --color-bg-input: #1F1C18;
+  --color-bg-input-focus: #28231F;
+
+  --color-text-primary: #F4EFE8;
+  --color-text-secondary: #D9D0C5;
+  --color-text-muted: #AEA498;
+  --color-text-subtle: #7D746A;
+  --color-text-inverted: #141210;
+
+  --color-border-subtle: #292420;
+  --color-border-default: #342E29;
+  --color-border-strong: #4D443C;
+  --color-border-focus: #E28E64;
+
+  --color-btn-primary-bg: #FAF6F0;
+  --color-btn-primary-text: #141210;
+  --color-btn-primary-hover: #E8E2D9;
+  --color-btn-secondary-bg: #2B2622;
+  --color-btn-secondary-text: #FAF6F0;
+  --color-btn-secondary-hover: #38322D;
+
+  --color-accent-terracotta: #E28E64;
+  --color-accent-terracotta-hover: #F0A27B;
+  --color-accent-terracotta-subtle: #33241C;
+  --color-accent-terracotta-text: #E8956B;
+
+  --color-status-success-bg: #1B2E22;
+  --color-status-success-border: #2A4735;
+  --color-status-success-text: #82CFA0;
+
+  --color-status-warning-bg: #362B14;
+  --color-status-warning-border: #52411F;
+  --color-status-warning-text: #F2CB74;
+
+  --color-status-error-bg: #3A1E1E;
+  --color-status-error-border: #5E2E2E;
+  --color-status-error-text: #F08C82;
+
+  --color-status-info-bg: #272238;
+  --color-status-info-border: #3B3354;
+  --color-status-info-text: #BFB3F2;
+
+  --color-scrollbar-track: #171412;
+  --color-scrollbar-thumb: #3B342E;
+  --color-scrollbar-thumb-hover: #544A41;
+
+  --shadow-card: 0 10px 28px -8px rgba(0, 0, 0, 0.35);
+  --shadow-card-elevated: 0 16px 36px -8px rgba(0, 0, 0, 0.45);
+  --shadow-modal: 0 25px 60px -15px rgba(0, 0, 0, 0.65);
 }
 
 @media (min-width: 640px) {
@@ -343,6 +498,7 @@ html.dark .hover\:bg-\[\#F3EFE9\]:hover,
 html.dark .hover\:bg-\[\#F2EFE9\]:hover,
 html.dark .hover\:bg-\[\#EFECE6\]:hover,
 html.dark .hover\:bg-\[\#EFEBE4\]:hover,
+html.dark .hover\:bg-\[\#E4DDD3\]:hover,
 html.dark .hover\:bg-\[\#EBE4DA\]:hover,
 html.dark .hover\:bg-\[\#EAE3D6\]:hover,
 html.dark .hover\:bg-\[\#EAE2D6\]:hover,
@@ -400,7 +556,9 @@ html.dark .text-\[\#3B342F\] {
 
 html.dark .text-\[\#4A433C\],
 html.dark .text-\[\#4B453F\],
-html.dark .text-\[\#5A534C\] {
+html.dark .text-\[\#5A534C\],
+html.dark .text-\[\#5A524A\],
+html.dark .text-\[\#E5DEC9\] {
   color: #D9D0C5 !important;
 }
 
@@ -528,8 +686,19 @@ html.dark .border-\[\#EAE4DC\],
 html.dark .border-\[\#ECE5DA\],
 html.dark .border-\[\#ECE7DF\],
 html.dark .border-\[\#EDE6DC\],
+html.dark .border-\[\#EFECE6\],
 html.dark .border-\[\#EADBCC\] {
   border-color: #342E29 !important;
+}
+
+html.dark .border-\[\#4A433C\],
+html.dark .border-\[\#5A534C\] {
+  border-color: #4D443A !important;
+}
+
+html.dark .border-\[\#C87D55\],
+html.dark .border-\[\#C87D55\]\/70 {
+  border-color: #E28E64 !important;
 }
 
 html.dark .border-\[\#EFEAE1\],
@@ -787,6 +956,22 @@ html.dark [role="group"][aria-label="Focus timer mode"] button[aria-pressed="tru
 
 .donut-progress-ring {
   stroke: var(--donut-progress-stroke);
+}
+
+/* Date Picker Calendar Indicator in Dark Mode */
+html.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85) sepia(0.2) saturate(1.5);
+  cursor: pointer;
+}
+
+/* Secondary Dark Button & Mini Actions in Dark Mode */
+html.dark .bg-\[\#4A433C\] {
+  background-color: #2E2824 !important;
+  color: #FAF6F0 !important;
+}
+
+html.dark .bg-\[\#4A8B63\] {
+  background-color: #2D6E48 !important;
 }
 
 /* Soft, cohesive shadows in Dark Mode without harsh brown halos */

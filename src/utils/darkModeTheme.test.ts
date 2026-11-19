@@ -128,3 +128,58 @@ test('index.css softens elevated card and window drop-shadows in dark mode', () 
   );
 });
 
+test('index.css defines centralized semantic color tokens for both Light Mode (:root) and Dark Mode (html.dark)', () => {
+  const semanticTokens = [
+    '--color-bg-canvas',
+    '--color-bg-surface-primary',
+    '--color-bg-surface-secondary',
+    '--color-bg-surface-tertiary',
+    '--color-bg-surface-elevated',
+    '--color-text-primary',
+    '--color-text-secondary',
+    '--color-text-muted',
+    '--color-border-subtle',
+    '--color-border-default',
+    '--color-btn-primary-bg',
+    '--color-btn-primary-text',
+    '--color-accent-terracotta',
+    '--color-status-success-bg',
+    '--color-status-warning-bg',
+    '--color-status-error-bg',
+    '--color-status-info-bg',
+    '--color-scrollbar-track',
+    '--color-scrollbar-thumb',
+    '--shadow-card',
+  ];
+
+  for (const token of semanticTokens) {
+    assert.ok(
+      cssContent.includes(`${token}:`),
+      `Semantic token ${token} must be defined in theme variables`
+    );
+  }
+});
+
+test('index.css defines custom scrollbars and text selection for light and dark themes', () => {
+  assert.ok(cssContent.includes('scrollbar-width: thin;'), 'thin scrollbar width must be set');
+  assert.ok(cssContent.includes('*::-webkit-scrollbar'), 'webkit scrollbar must be styled');
+  assert.ok(cssContent.includes('::selection'), 'light mode text selection must be defined');
+  assert.ok(cssContent.includes('html.dark ::selection'), 'dark mode text selection must be defined');
+});
+
+test('index.css styles calendar date picker indicator and secondary buttons for dark mode', () => {
+  assert.ok(
+    cssContent.includes('html.dark input[type="date"]::-webkit-calendar-picker-indicator'),
+    'date picker indicator must be inverted/styled for dark mode readability'
+  );
+  assert.ok(
+    cssContent.includes('html.dark .bg-\\[\\#4A433C\\]'),
+    'dark mode secondary button override must exist'
+  );
+  assert.ok(
+    cssContent.includes('html.dark .bg-\\[\\#4A8B63\\]'),
+    'dark mode sheets badge override must exist'
+  );
+});
+
+
